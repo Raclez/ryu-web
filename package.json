@@ -1,0 +1,40 @@
+{
+  "name": "ryu-web",
+  "version": "1.0.0",
+  "description": "Ryu的个人博客",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "keywords": [
+    "blog",
+    "vue3",
+    "vite",
+    "typescript"
+  ],
+  "author": "Ryu",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.13.17",
+    "@typescript-eslint/eslint-plugin": "^8.29.0",
+    "@typescript-eslint/parser": "^8.29.0",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "axios": "^1.8.4",
+    "pinia": "^3.0.1",
+    "sass": "^1.86.1",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.4",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "vue-tsc": "^2.2.8"
+  },
+  "dependencies": {
+    "live2d-widget": "^3.1.4",
+    "live2d-widget-model-haruto": "^1.0.5",
+    "live2d-widget-model-shizuku": "^1.0.5",
+    "live2d.min.js": "link:cdnjs/cdnjs/ajax/libs/live2d-widget/3.1.4/live2d.min.js"
+  }
+}

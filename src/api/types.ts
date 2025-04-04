@@ -1,0 +1,90 @@
+/**
+ * 博客文章类型定义
+ */
+export interface Blog {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  createTime: string;
+  heat: number;
+  tags: string[];
+  category: string;
+  image: string;
+  coverImage: string;
+  toc: string;
+  author: Author;
+  comments?: Comment[];
+}
+
+/**
+ * 分类类型定义
+ */
+export interface Category {
+  id: string;
+  name: string;
+  count: number;
+  description?: string;
+}
+
+/**
+ * 作者类型定义
+ */
+export interface Author {
+  id: string;
+  name: string;
+  avatar: string;
+  bio: string;
+}
+
+/**
+ * 评论类型定义
+ */
+export interface Comment {
+  id: string;
+  content: string;
+  createTime: string;
+  likes: number;
+  liked: boolean;
+  user: User;
+  replies?: Reply[];
+}
+
+/**
+ * 回复类型定义
+ */
+export interface Reply {
+  id: string;
+  content: string;
+  createTime: string;
+  user: User;
+  replyTo: string;
+}
+
+/**
+ * 用户类型定义
+ */
+export interface User {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
+/**
+ * API响应类型定义
+ */
+export interface ApiResponse<T> {
+  code: number;
+  data: T;
+  message: string;
+}
+
+/**
+ * 分页响应类型
+ */
+export interface PaginatedResponse<T> {
+  total: number;
+  page: number;
+  pageSize: number;
+  list: T[];
+} 
