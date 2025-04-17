@@ -18,11 +18,14 @@
   "author": "Ryu",
   "license": "ISC",
   "devDependencies": {
+    "@types/highlight.js": "^10.1.0",
     "@types/node": "^22.13.17",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
     "@vitejs/plugin-vue": "^5.2.3",
+    "aplayer": "1.10.1",
     "axios": "^1.8.4",
+    "meting": "2.0.1",
     "pinia": "^3.0.1",
     "sass": "^1.86.1",
     "typescript": "^5.8.2",
@@ -32,9 +35,19 @@
     "vue-tsc": "^2.2.8"
   },
   "dependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/prismjs": "^1.26.5",
+    "github-markdown-css": "^5.8.1",
+    "highlight.js": "^11.11.1",
     "live2d-widget": "^3.1.4",
     "live2d-widget-model-haruto": "^1.0.5",
     "live2d-widget-model-shizuku": "^1.0.5",
-    "live2d.min.js": "link:cdnjs/cdnjs/ajax/libs/live2d-widget/3.1.4/live2d.min.js"
+    "live2d.min.js": "link:cdnjs/cdnjs/ajax/libs/live2d-widget/3.1.4/live2d.min.js",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "markdown-it-container": "^4.0.0",
+    "markdown-it-prism": "^3.0.0",
+    "md-editor-v3": "^5.4.5",
+    "shiki": "^3.2.2"
   }
 }

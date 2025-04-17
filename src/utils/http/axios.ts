@@ -25,7 +25,7 @@ export class AxiosHttpClient {
       (config) => {
         // 记录请求数
         pendingRequestCount++;
-        
+
         // 是否显示loading
         if (requestOptions.showLoading) {
           // 这里可以实现显示全局loading
@@ -39,7 +39,9 @@ export class AxiosHttpClient {
 
         // 添加Token
         if (requestOptions.withToken !== false) {
-          const token = localStorage.getItem('token');
+          //TODO
+          // const token = localStorage.getItem('token');
+          const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOjEsInJuU3RyIjoiU09MNDRUTTBpU0VObEFvaUwybTlYMTlkcGxra0lPRzUifQ.X_YzuQbrA_n4WFexQPzMUTVIloxvFUc3KgOSIQeKJZY"
           if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
           }
@@ -49,17 +51,17 @@ export class AxiosHttpClient {
       },
       (error) => {
         pendingRequestCount--;
-        
+
         // 自定义请求错误拦截器
         if (interceptors?.requestInterceptorsCatch) {
           error = interceptors.requestInterceptorsCatch(error);
         }
-        
+
         // 隐藏loading
         if (pendingRequestCount <= 0 && requestOptions.showLoading) {
           // hideLoading();
         }
-        
+
         return Promise.reject(error);
       }
     );
@@ -68,7 +70,7 @@ export class AxiosHttpClient {
     this.instance.interceptors.response.use(
       (response: AxiosResponse<any>) => {
         pendingRequestCount--;
-        
+
         // 隐藏loading
         if (pendingRequestCount <= 0 && requestOptions.showLoading) {
           // hideLoading();
@@ -78,12 +80,12 @@ export class AxiosHttpClient {
         if (interceptors?.responseInterceptors) {
           response.data = interceptors.responseInterceptors(response);
         }
-        
+
         return response;
       },
       (error: AxiosError) => {
         pendingRequestCount--;
-        
+
         // 隐藏loading
         if (pendingRequestCount <= 0 && requestOptions.showLoading) {
           // hideLoading();
@@ -93,10 +95,10 @@ export class AxiosHttpClient {
         if (interceptors?.responseInterceptorsCatch) {
           error = interceptors.responseInterceptorsCatch(error);
         }
-        
+
         // 错误处理
         this.handleError(error);
-        
+
         return Promise.reject(error);
       }
     );
@@ -105,16 +107,16 @@ export class AxiosHttpClient {
   // 错误处理
   private handleError(error: AxiosError) {
     const { requestOptions } = this.options;
-    
+
     // 如果不需要显示错误信息，直接返回
     if (requestOptions?.errorMessageType === 'none') {
       return;
     }
-    
+
     let message = '';
     if (error.response) {
       const status = error.response.status;
-      
+
       // 统一处理HTTP状态码
       switch (status) {
         case 400:
@@ -179,14 +181,14 @@ export class AxiosHttpClient {
   // 请求方法
   public request<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<ResponseBody<T>> {
     const mergedOptions = { ...this.options.requestOptions, ...options };
-    
+
     // 创建一个新的Promise以处理自定义逻辑
     return new Promise((resolve, reject) => {
       // 应用自定义选项
       if (mergedOptions.timeout) {
         config.timeout = mergedOptions.timeout;
       }
-      
+
       if (mergedOptions.baseURL) {
         config.baseURL = mergedOptions.baseURL;
       }
@@ -200,14 +202,14 @@ export class AxiosHttpClient {
         try {
           const response = await this.instance.request<ResponseBody<T>>(config);
           const data = response.data;
-          
+
           // 统一处理业务状态码
           if (data.success || data.code === 200 || data.code === '200') {
             // 成功提示
             if (mergedOptions.successMessageType && mergedOptions.successMessageType !== 'none') {
               // this.message.success(data.message || '操作成功');
             }
-            
+
             // 返回成功响应
             resolve(data);
           } else {
@@ -216,7 +218,7 @@ export class AxiosHttpClient {
               // this.message.error(data.message || '操作失败');
               console.error(data.message || '操作失败');
             }
-            
+
             reject(data);
           }
         } catch (error) {
@@ -265,4 +267,4 @@ export class AxiosHttpClient {
   public static create(options: CreateAxiosOptions = {}): AxiosHttpClient {
     return new AxiosHttpClient(options);
   }
-} 
+}

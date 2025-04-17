@@ -1,1421 +1,851 @@
 <template>
   <div class="blog-detail-container">
-    <header class="header" @mousemove="showNav" @mouseleave="hideNav">
-      <div class="nav" :class="{ 'visible': isNavVisible }">
-        <div class="menu-wrapper">
-          <div class="menu">
-            <router-link to="/">首页</router-link>
-            <div class="dropdown">
-              <span>分类</span>
-              <div class="dropdown-content">
-                <router-link 
-                  v-for="category in categories" 
-                  :key="category.id" 
-                  :to="`/category/${category.name}`"
-                >
-                  {{ category.name }}
-                </router-link>
-              </div>
-            </div>
-          </div>
-          
-          <div class="right-actions">
-            <div class="search-container">
-              <input v-if="showSearchInput" 
-                type="text" 
-                class="search-input" 
-                placeholder="搜索..." 
-                ref="searchInput"
-                v-model="searchQuery"
-                @keyup.enter="performSearch"
-                @blur="hideSearchInput"
-              />
-              <div class="search-btn" @click="toggleSearchInput">
-                <i class="search-icon">🔍</i>
-              </div>
-            </div>
-            <div class="avatar">
-              <img src="@/assets/images/avatar.png" alt="头像" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-    
+    <!-- 页面顶部进度条 -->
+    <div class="scroll-progress-bar" :style="{width: `${scrollProgress}%`}"></div>
+
+    <!-- 顶部导航栏 -->
+    <AppHeader :categories="categories" />
+
+    <!-- 加载状态 -->
     <div v-if="loading" class="loading">
-      <p>加载中...</p>
+      <div class="spinner"></div>
+      <div class="loading-text">Loading...</div>
     </div>
-    
+
+    <!-- 错误状态 -->
     <div v-else-if="error" class="error">
       <p>{{ error }}</p>
+      <button class="retry-btn" @click="() => fetchBlogDetail()">重试</button>
     </div>
-    
-    <template v-else-if="blog">
-      <div class="blog-header">
-        <div class="container">
-          <h1 class="blog-title">{{ blog.title }}</h1>
-          <div class="blog-meta">
-            <div class="category">{{ blog.category }}</div>
-            <div class="date">{{ formatDate(blog.createTime) }}</div>
-          </div>
-        </div>
-      </div>
-      
-      <main class="blog-content">
-        <div class="container">
-          <article class="article-content" v-html="blog.content"></article>
-          
-          <div class="post-tags" v-if="blog.tags && blog.tags.length">
-            <span class="tag-item" v-for="(tag, index) in blog.tags" :key="index">
-              {{ tag }}
-            </span>
-          </div>
-          
+
+    <!-- 博客内容 -->
+    <div v-else-if="blog">
+      <!-- 大图标题区 -->
+      <div class="hero-section" :style="{ backgroundImage: `url('${blog.coverImageUrl || '@/assets/images/banner.jpg'}')` }">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+        <h1 class="blog-title">{{ blog.title }}</h1>
           <div class="author-info">
-            <div class="avatar">
-              <img :src="blog.author?.avatar" :alt="blog.author?.name" />
-            </div>
-            <div class="author-details">
-              <div class="name">{{ blog.author?.name || 'Ryu' }}</div>
-              <div class="bio">{{ blog.author?.bio || '博客作者' }}</div>
-            </div>
+            <img :src="blog.authorAvatar" alt="author" class="author-avatar" />
+            <span class="author-name">{{ blog.author }}</span>
+            <span class="publish-date">{{ formattedDate }}</span>
+            <span class="blog-views"><i>👁️</i>{{ blog.views }}</span>
           </div>
-          
-          <div class="related-posts" v-if="relatedBlogs && relatedBlogs.length">
-            <h3 class="related-title">相关文章</h3>
-            <div class="related-list">
-              <div 
-                v-for="related in relatedBlogs" 
-                :key="related.id" 
-                class="related-item"
-                @click="navigateToBlog(related.id)"
-              >
-                <div class="related-image">
-                  <img :src="related.image" :alt="related.title" />
+          </div>
+      </div>
+
+      <!-- 通知栏 -->
+      <!-- <div class="notification-bar">
+        <div v-if="notifications[0]" class="notification">
+          <span>本文最后更新于 {{ formattedUpdateDate }}，若有错误请留言指正</span>
+          <button class="close-btn" @click="closeNotification(1)">×</button>
+        </div>
+        <div v-if="notifications[1]" class="notification">
+          <span>阅读时间约 {{ readingTime }} 分钟，共 {{ wordCount }} 个字</span>
+          <button class="close-btn" @click="closeNotification(2)">×</button>
+        </div>
+      </div> -->
+
+      <!-- 内容布局 -->
+      <div class="content-container">
+        <!-- 左侧栏 -->
+        <div class="left-sidebar">
+          <Live2DWidget :message="'正在阅读: ' + blog.title" />
+          </div>
+
+        <!-- 中间内容 -->
+        <div class="main-content">
+          <div class="blog-content-wrapper">
+            <div class="blog-content" ref="blogContentRef" v-html="renderedContent"></div>
+            
+            <!-- 添加知识共享协议部分 -->
+            <div class="license-section">
+              <div class="license-container">
+                <img src="https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png" alt="Creative Commons License" class="license-img">
+                <div class="license-text">
+                  <p>本文采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">知识共享署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0)</a> 进行许可。</p>
                 </div>
-                <div class="related-info">
-                  <h4>{{ related.title }}</h4>
-                  <div class="related-meta">
-                    <span>{{ related.category }}</span>
-                  </div>
+          </div>
+        </div>
+
+            <!-- 添加标签部分 -->
+            <div class="blog-tags" v-if="blog.tags && blog.tags.length > 0">
+              <span class="tag-label">标签：</span>
+              <span v-for="(tag, index) in blog.tags" :key="index" class="tag">{{ tag }}</span>
+          </div>
+
+            <!-- 添加相关推荐部分 -->
+            <div class="related-posts-section">
+              <h3 class="related-posts-title">相关推荐</h3>
+              <div class="related-posts-container">
+                <div v-if="prevPost" class="related-post-card prev-post" @click="goToPost(prevPost)">
+                  <div class="related-post-label">PREVIOUS POST</div>
+                  <div class="related-post-title">{{ prevPost.title }}</div>
+                </div>
+                <div v-if="nextPost" class="related-post-card next-post" @click="goToPost(nextPost)">
+                  <div class="related-post-label">NEXT POST</div>
+                  <div class="related-post-title">{{ nextPost.title }}</div>
                 </div>
               </div>
             </div>
-          </div>
           
-          <div class="comments-section">
-            <h3 class="comments-title">评论</h3>
-            
-            <div class="comment-form">
-              <textarea placeholder="发表你的评论..." v-model="commentText"></textarea>
-              <button @click="submitComment">提交评论</button>
-            </div>
-            
-            <div class="comments-list" v-if="blog.comments && blog.comments.length > 0">
-              <div v-for="comment in blog.comments" :key="comment.id" class="comment-item">
-                <div class="comment-avatar">
-                  <img :src="comment.user.avatar" :alt="comment.user.name" />
-                </div>
-                <div class="comment-content">
-                  <div class="comment-header">
-                    <span class="comment-author">{{ comment.user.name }}</span>
-                    <span class="comment-date">{{ formatDate(comment.createTime) }}</span>
+            <!-- 添加评论区部分 -->
+            <div class="comments-section">
+              <h3 class="comments-title">评论 ({{ comments.length }})</h3>
+              
+              <!-- 评论列表 -->
+              <div class="comments-list">
+                <div v-for="(comment, index) in comments" :key="index" class="comment-item">
+                  <div class="comment-avatar">
+                    <img :src="comment.avatar" :alt="comment.name">
                   </div>
-                  <div class="comment-text">{{ comment.content }}</div>
+                  <div class="comment-content">
+                    <div class="comment-header">
+                      <span class="comment-name">{{ comment.name }}</span>
+                      <span class="comment-date">{{ formatCommentDate(comment.date) }}</span>
+                    </div>
+                    <div class="comment-text">{{ comment.content }}</div>
+                    <div class="comment-actions">
+                      <button @click="toggleLike(index)" class="like-button" :class="{ 'liked': comment.liked }">
+                        <i class="heart-icon">❤️</i> {{ comment.likes }}
+                      </button>
+                      <button class="reply-button">回复</button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div class="no-comments" v-else>
-              <p>暂无评论，成为第一个评论的人吧！</p>
+              
+              <!-- 评论表单 -->
+              <div class="comment-form">
+                <h4 class="form-title">发表评论</h4>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="name">昵称 <span class="required">*</span></label>
+                    <input type="text" id="name" v-model="newComment.name" placeholder="请输入您的昵称">
+                  </div>
+                  <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" v-model="newComment.email" placeholder="请输入您的邮箱（选填）">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="comment">评论内容 <span class="required">*</span></label>
+                  <textarea id="comment" v-model="newComment.content" placeholder="请输入您的评论"></textarea>
+                </div>
+                <button @click="submitComment" class="submit-button">提交评论</button>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </template>
-    
-    <div id="live2d-container" class="live2d-container" :class="{ 'active': showAiMenu }">
-      <div id="live2d-widget" style="border: 1px solid red; min-height: 300px; min-width: 200px;"></div>
-      <div class="live2d-speech-bubble" v-if="showAiSpeechBubble">
-        <div class="bubble-content">{{ currentAiMessage }}</div>
-      </div>
-      <div class="live2d-menu" v-if="showAiMenu">
-        <div class="menu-item" @click.stop="startChat">
-          <i class="menu-icon">💬</i>
-          <span class="menu-text">聊天助手</span>
-        </div>
-        <div class="menu-item" @click.stop="playMusic">
-          <i class="menu-icon">🎵</i>
-          <span class="menu-text">播放音乐</span>
-        </div>
-        <div class="menu-item" @click.stop="searchContent">
-          <i class="menu-icon">🔍</i>
-          <span class="menu-text">搜索内容</span>
-        </div>
-        <div class="menu-item" @click.stop="askDeepSeek">
-          <i class="menu-icon">🤖</i>
-          <span class="menu-text">DeepSeek AI</span>
-        </div>
-        <div class="menu-item" @click.stop="toggleSpeechBubble">
-          <i class="menu-icon">💭</i>
-          <span class="menu-text">{{ showAiSpeechBubble ? '关闭提示' : '显示提示' }}</span>
-        </div>
-      </div>
-      <audio ref="audioPlayer" class="audio-player"></audio>
-    </div>
-    
-    <div class="ai-chat-modal" v-if="showChatModal">
-      <div class="chat-container">
-        <div class="chat-header">
-          <div class="chat-title">
-            <img src="@/assets/images/mascots/mascot-left.png" alt="AI" class="title-avatar" />
-            <span>AI 助手</span>
-          </div>
-          <div class="chat-close" @click="closeChat">×</div>
-        </div>
-        <div class="chat-messages" ref="chatMessages">
-          <div 
-            v-for="(message, index) in chatMessages" 
-            :key="index" 
-            :class="['chat-message', message.type]"
-          >
-            <div class="message-avatar" v-if="message.type === 'ai'">
-              <img src="@/assets/images/mascots/mascot-left.png" alt="AI" />
+
+        <!-- 右侧栏 -->
+          <div class="right-sidebar">
+          <!-- 目录 -->
+          <div class="catalog">
+            <h3 class="catalog-title">
+              <span class="category-icon">📋</span>
+              <span class="category-title-text">目录</span>
+            </h3>
+            <ul class="catalog-list" v-if="toc.length">
+              <li
+                v-for="item in toc"
+                :key="item.id"
+                :class="[`level-${item.level}`, { active: activeHeading === item.id }]"
+                @click="scrollToHeading(item.id)"
+                  >
+                    {{ item.text }}
+                </li>
+              </ul>
+            <div v-else class="empty-toc">
+              此文章没有目录
             </div>
-            <div class="message-content">{{ message.content }}</div>
           </div>
-        </div>
-        <div class="chat-input">
-          <input 
-            type="text" 
-            v-model="chatInput" 
-            placeholder="输入你想问的问题..." 
-            @keyup.enter="sendMessage"
-          />
-          <button @click="sendMessage">发送</button>
         </div>
       </div>
     </div>
     
-    <footer class="footer">
-      <div class="copyright">
-        © {{ new Date().getFullYear() }} Ryu
-      </div>
-      <div class="powered-by">
-        Powered by <a href="https://halo.run/" target="_blank">Halo</a>  •  Crafted with by <a href="https://lixingyong.com/" target="_blank">LIlGG</a>
-      </div>
-      <div class="icp">
-        鄂ICP备2024072949号
-      </div>
-    </footer>
+    <!-- 回到顶部 -->
+    <button v-if="!loading && blog" class="back-to-top" @click="backToTop">
+      <span>↑</span>
+    </button>
+
+    <!-- 页脚 -->
+    <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/store';
-import type { Blog, Comment } from '@/api';
-// @ts-ignore
-import Live2DWidget from 'live2d-widget';
+import AppHeader from '@/components/AppHeader.vue';
+import AppFooter from '@/components/AppFooter.vue';
+import Live2DWidget from '@/components/Live2DWidget.vue';
+import MarkdownIt from 'markdown-it';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 
 const route = useRoute();
 const router = useRouter();
 const blogStore = useBlogStore();
 
-const loading = ref<boolean>(true);
-const error = ref<string | null>(null);
-const blog = ref<Blog | null>(null);
-const commentText = ref<string>('');
-const relatedBlogs = ref<Blog[]>([]);
-const isNavVisible = ref<boolean>(false);
-const showAiMenu = ref<boolean>(false);
-const categories = computed(() => blogStore.categories);
-const showAiSpeechBubble = ref<boolean>(false);
-const currentAiMessage = ref<string>('有什么我能帮你的吗?');
-const audioPlayer = ref<HTMLAudioElement | null>(null);
-const showChatModal = ref<boolean>(false);
-const chatMessages = ref<Array<{ type: string; content: string }>>([
-  { type: 'ai', content: '你好！我是你的AI助手，有什么可以帮到你的吗？' }
-]);
-const chatInput = ref<string>('');
-const chatMessages$ = ref<HTMLElement | null>(null);
-const isUsingDeepseek = ref<boolean>(false);
-const isProcessingAI = ref<boolean>(false);
-const live2dWidget = ref<any>(null);
-const showSearchInput = ref<boolean>(false);
-const searchQuery = ref<string>('');
-const searchInput = ref<HTMLInputElement | null>(null);
-
-// 扩展Window接口以支持自定义属性
-declare global {
-  interface Window {
-    live2d_path?: string;
-    live2d_settings?: {
-      modelId: number;
-      modelTexturesId: number;
-      modelStorage: boolean;
-      waifuSize: string;
-      waifuTipsSize: string;
-      waifuFontSize: string;
-      waifuToolFont: string;
-      waifuToolLine: string;
-      waifuToolTop: string;
-      waifuDraggable: string;
-      waifuDraggableRevert: boolean;
-      homePageUrl: string;
-      showToolMenu: boolean;
-      canCloseLive2d: boolean;
-      canSwitchModel: boolean;
-      canSwitchTextures: boolean;
-      canSwitchHitokoto: boolean;
-      canTakeScreenshot: boolean;
-      canTurnToHomePage: boolean;
-      canTurnToAboutPage: boolean;
-      modelAPI: string;
-      tipsMessage: string;
-      hitokotoAPI: string;
-    };
-  }
+// 定义类型接口
+interface TocItem {
+  id: string;
+  level: number;
+  text: string | null;
 }
 
-// 显示导航栏
-const showNav = (): void => {
-  isNavVisible.value = true;
-};
+interface CommentType {
+  name: string;
+  avatar: string;
+  date: Date;
+  content: string;
+  likes: number;
+  liked: boolean;
+}
 
-// 隐藏导航栏
-const hideNav = (): void => {
-  isNavVisible.value = false;
-};
+interface PostPreview {
+  id: string;
+  title: string;
+  coverImageUrl: string;
+  createTime: Date;
+}
 
-// Live2D初始化
-const initLive2DWidget = (): void => {
-  try {
-    console.log('开始加载Live2D...');
-    
-    // 创建script元素
-    const script = document.createElement('script');
-    script.src = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/autoload.js';
-    
-    // 设置全局变量配置
-    window.live2d_path = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/';
-    window.live2d_settings = {
-      modelId: 6,               // 设置默认模型为haruto
-      modelTexturesId: 0,       // 默认材质ID
-      modelStorage: false,      // 不储存模型ID
-      waifuSize: '280x250',     // 看板娘大小
-      waifuTipsSize: '250x70',  // 提示框大小
-      waifuFontSize: '12px',    // 提示框字体
-      waifuToolFont: '14px',    // 工具栏字体
-      waifuToolLine: '20px',    // 工具栏行高
-      waifuToolTop: '0px',      // 工具栏顶部边距
-      waifuDraggable: 'unlimited', // 拖拽样式
-      waifuDraggableRevert: true, // 松开鼠标还原拖拽位置
-      homePageUrl: '/',         // 主页链接
-      showToolMenu: true,       // 显示工具栏
-      canCloseLive2d: true,     // 显示关闭按钮
-      canSwitchModel: true,     // 显示模型切换
-      canSwitchTextures: true,  // 显示材质切换
-      canSwitchHitokoto: true,  // 显示一言切换
-      canTakeScreenshot: true,  // 显示看板娘截图
-      canTurnToHomePage: true,  // 显示返回主页
-      canTurnToAboutPage: true, // 显示关于页
-      modelAPI: 'https://unpkg.com/live2d-widget-model-haruto@1.0.5/assets/haruto.model.json',
-      tipsMessage: 'waifu-tips.json',         // 同目录下可省略路径
-      hitokotoAPI: 'hitokoto.cn'              // 一言API
-    } as any; // 使用类型断言解决TS类型问题
-    
-    // 添加到文档
-    document.body.appendChild(script);
-    
-    console.log('Live2D脚本加载成功');
-  } catch (error) {
-    console.error('Live2D加载失败:', error);
-  }
-};
+interface NewCommentType {
+  name: string;
+  email: string;
+  content: string;
+}
 
-// 请求DeepSeek API
-const askDeepSeek = async (event: Event): Promise<void> => {
-  event.stopPropagation();
-  isUsingDeepseek.value = true;
-  startChat(event);
-  currentAiMessage.value = '已切换到DeepSeek AI模式';
-};
+const loading = ref<boolean>(true);
+const error = ref<string | null>(null);
+const blog = ref<any>(null);
+const categories = ref<any[]>([]);
+const scrollProgress = ref<number>(0);
+const readingTime = ref<number>(0);
+const readingTimeSeconds = ref<number>(0);
+const wordCount = ref<number>(0);
+const notifications = ref<boolean[]>([true, true]);
+const toc = ref<TocItem[]>([]);
+const activeHeading = ref<string>('');
+const showBackToTop = ref<boolean>(false);
+const renderedContent = ref<string>('');
+const blogContentRef = ref<HTMLElement | null>(null);
+const prevPost = ref<PostPreview | null>(null);
+const nextPost = ref<PostPreview | null>(null);
 
-// 切换AI助手菜单
-const toggleAiMenu = (): void => {
-  showAiMenu.value = !showAiMenu.value;
-  if (showAiMenu.value) {
-    currentAiMessage.value = '需要我做什么?';
-  } else {
-    currentAiMessage.value = '你要干嘛?';
-  }
-};
+const formattedDate = computed(() => {
+  if (!blog.value || !blog.value.createTime) return '';
+  return formatDate(blog.value.createTime);
+});
 
-// 切换对话气泡
-const toggleSpeechBubble = (event: Event): void => {
-  event.stopPropagation();
-  showAiSpeechBubble.value = !showAiSpeechBubble.value;
-};
-
-// 开始聊天
-const startChat = (event: Event): void => {
-  event.stopPropagation();
-  showChatModal.value = true;
-  showAiMenu.value = false;
-  
-  // 滚动到底部
-  nextTick(() => {
-    scrollChatToBottom();
-  });
-};
-
-// 关闭聊天
-const closeChat = (): void => {
-  showChatModal.value = false;
-  isUsingDeepseek.value = false;
-};
-
-// 滚动聊天窗口到底部
-const scrollChatToBottom = (): void => {
-  if (chatMessages$.value) {
-    chatMessages$.value.scrollTop = chatMessages$.value.scrollHeight;
-  }
-};
-
-// 模拟DeepSeek API调用
-const callDeepSeekAPI = async (prompt: string): Promise<string> => {
-  // 这里是模拟API调用，实际项目中替换为真实的DeepSeek API调用
-  console.log('调用DeepSeek API，提问:', prompt);
-  
-  // 模拟API延迟
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 根据问题关键词生成不同响应
-      if (prompt.includes('你好') || prompt.includes('hi')) {
-        resolve('你好！我是基于DeepSeek的AI助手，很高兴为你服务。');
-      } else if (prompt.includes('天气')) {
-        resolve('我无法获取实时天气信息，但我可以帮你解答技术问题或提供其他信息。如果需要天气信息，建议查看专业天气APP或网站。');
-      } else if (prompt.includes('代码') || prompt.includes('编程')) {
-        resolve('关于编程问题，我可以提供帮助。DeepSeek模型对编程领域有很好的理解。请详细描述你遇到的问题，包括使用的编程语言和具体场景。');
-      } else if (prompt.includes('博客') || prompt.includes('文章')) {
-        resolve(`我注意到你正在阅读"${blog.value?.title}"这篇博客。这是一篇很有见解的文章！如果你对文章内容有任何问题，我很乐意解答。`);
-      } else if (prompt.includes('什么是') || prompt.includes('如何')) {
-        resolve('这是一个很好的问题。DeepSeek模型擅长解释概念和提供指导。让我为你详细分析一下这个问题...');
-      } else {
-        resolve('感谢你的问题。作为一个基于DeepSeek的AI助手，我尽力提供准确的回答。你可以问我关于技术、科学、历史或其他领域的问题，我会基于我的知识库给你解答。');
-      }
-    }, 2000);
-  });
-};
-
-// 播放音乐
-const playMusic = (event: Event): void => {
-  event.stopPropagation();
-  if (audioPlayer.value) {
-    if (audioPlayer.value.paused) {
-      audioPlayer.value.src = 'https://music.163.com/song/media/outer/url?id=1824045033.mp3';
-      audioPlayer.value.play();
-      currentAiMessage.value = '正在播放音乐...';
-    } else {
-      audioPlayer.value.pause();
-      currentAiMessage.value = '音乐已暂停';
-    }
-  }
-};
-
-// 发送消息
-const sendMessage = async (): Promise<void> => {
-  if (!chatInput.value.trim() || isProcessingAI.value) return;
-  
-  // 添加用户消息
-  chatMessages.value.push({
-    type: 'user',
-    content: chatInput.value
-  });
-  
-  const userMessage = chatInput.value;
-  chatInput.value = '';
-  
-  // 滚动到底部
-  nextTick(() => {
-    scrollChatToBottom();
-  });
-  
-  // 处理回复
-  if (isUsingDeepseek.value) {
-    // 调用DeepSeek AI
-    isProcessingAI.value = true;
-    
-    // 显示思考状态
-    chatMessages.value.push({
-      type: 'ai',
-      content: '思考中...'
-    });
-    
-    // 滚动到底部
-    nextTick(() => {
-      scrollChatToBottom();
-    });
-    
-    try {
-      // 调用DeepSeek API
-      const aiResponse = await callDeepSeekAPI(userMessage);
-      
-      // 移除思考消息
-      chatMessages.value.pop();
-      
-      // 添加AI回复
-      chatMessages.value.push({
-        type: 'ai',
-        content: aiResponse
-      });
-    } catch (error) {
-      // 错误处理
-      chatMessages.value.pop();
-      chatMessages.value.push({
-        type: 'ai',
-        content: '抱歉，DeepSeek API调用出错，请稍后再试。'
-      });
-      console.error('DeepSeek API调用出错:', error);
-    } finally {
-      isProcessingAI.value = false;
-      
-      // 滚动到底部
-      nextTick(() => {
-        scrollChatToBottom();
-      });
-    }
-  } else {
-    // 普通AI响应
-    setTimeout(() => {
-      const responses = [
-        '我理解你的问题，让我思考一下...',
-        '这是个很好的问题！',
-        '我可以帮你解决这个问题。',
-        '根据我的理解，这个问题的答案是...',
-        '很抱歉，我现在无法回答这个问题。',
-        '我需要更多信息来回答这个问题。'
-      ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
-      chatMessages.value.push({
-        type: 'ai',
-        content: randomResponse
-      });
-      
-      // 滚动到底部
-      nextTick(() => {
-        scrollChatToBottom();
-      });
-    }, 1000);
-  }
-};
-
-// 搜索内容
-const searchContent = (event: Event): void => {
-  event.stopPropagation();
-  currentAiMessage.value = '请输入要搜索的内容';
-  // 可以在这里实现搜索功能
-};
-
-// 导航到相关博客
-const navigateToBlog = (blogId: string): void => {
-  if (route.params.id === blogId) return;
-  router.push({ name: 'BlogDetail', params: { id: blogId } });
-};
+const formattedUpdateDate = computed(() => {
+  if (!blog.value || !blog.value.updateTime) return '';
+  return formatDate(blog.value.updateTime);
+});
 
 // 格式化日期
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(date);
+const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffTime = now.getTime() - date.getTime();
+  const diff = Math.floor(diffTime / 1000 / 60 / 60 / 24);
+  
+  if (diff === 0) {
+    return '今天';
+  } else if (diff === 1) {
+    return '昨天';
+  } else if (diff < 30) {
+    return `${diff}天前`;
+  } else {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+};
+
+// 新增一个专门用于格式化评论日期的函数
+const formatCommentDate = (date: Date): string => {
+  if (!date) return '';
+  
+  const now = new Date();
+  const diffTime = now.getTime() - date.getTime();
+  const diff = Math.floor(diffTime / 1000 / 60 / 60 / 24);
+  
+  if (diff === 0) {
+    return '今天';
+  } else if (diff === 1) {
+    return '昨天';
+  } else if (diff < 30) {
+    return `${diff}天前`;
+  } else {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+};
+
+// 检查内容是否过期
+const isContentExpired = (updateTime: string): boolean => {
+  if (!updateTime) return false;
+  const now = new Date();
+  const lastUpdate = new Date(updateTime);
+  const diffTime = now.getTime() - lastUpdate.getTime();
+  const diffDays = diffTime / (1000 * 3600 * 24);
+  return diffDays > 180; // 超过180天视为过期
+};
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  highlight: function (str: string, lang: string): string {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        const highlighted = hljs.highlight(str, { language: lang }).value;
+
+        // 创建带Mac风格窗口的代码块
+        return `<div class="code-block">
+          <div class="code-header">
+            <div class="code-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="code-lang">${lang.toUpperCase()}</div>
+            <div class="code-copy">复制</div>
+          </div>
+          <pre class="hljs"><code>${highlighted}</code></pre>
+        </div>`;
+      } catch (__) {}
+    }
+
+    // 默认样式
+    return `<div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="code-lang">CODE</div>
+        <div class="code-copy">复制</div>
+      </div>
+      <pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>
+    </div>`;
+  }
+});
+
+const fetchBlogDetail = async (id?: string): Promise<void> => {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    if (id) {
+      blog.value = await blogStore.fetchBlogById(id);
+    } else {
+      blog.value = await blogStore.fetchBlogById('1');
+    }
+
+    console.log('blog', blog.value);
+
+    // 渲染Markdown内容
+    renderedContent.value = renderContent(blog.value.content);
+
+    // 获取前后文章
+    prevPost.value = {
+      id: '1',
+      title: 'Middleware',
+      coverImageUrl: 'https://picsum.photos/400/300?random=4',
+      createTime: new Date('2023-04-20')
+    };
+    
+    nextPost.value = {
+      id: '3',
+      title: 'Drools规则引擎-CSDN博客',
+      coverImageUrl: 'https://picsum.photos/400/300?random=5',
+      createTime: new Date('2023-05-15')
+    };
+
+    // 检查内容是否过期
+    // if (isContentExpired(mockData.updateTime)) {
+    //   notifications.value[0] = true;
+    // }
+
+  } catch (err) {
+    console.error('获取博客详情失败:', err);
+    error.value = '获取博客详情失败，请稍后重试';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const renderContent = (content: string): string => {
+  if (!content) return '';
+
+  // 替换Markdown标题格式，移除多余的#和数字前缀
+  let processedContent = content
+    .replace(/^### (\d+\.\d+) /gm, '### ')  // 替换类似 ### 10.4 这样的标题格式
+    .replace(/^### (\d+\.) /gm, '### ')     // 替换类似 ### 10. 这样的标题格式
+    .replace(/^### (\d+) /gm, '### ')       // 替换类似 ### 10 这样的标题格式
+    .replace(/^## (\d+\.\d+) /gm, '## ')    // 替换二级标题
+    .replace(/^## (\d+\.) /gm, '## ')
+    .replace(/^## (\d+) /gm, '## ')
+    .replace(/^# (\d+\.\d+) /gm, '# ')      // 替换一级标题
+    .replace(/^# (\d+\.) /gm, '# ')
+    .replace(/^# (\d+) /gm, '# ');
+
+  const markdownIt = new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true,
+    highlight: function (str: string, lang: string): string {
+      if (lang && hljs.getLanguage(lang)) {
+        try {
+          const code = hljs.highlight(str, { language: lang }).value;
+          return `<div class="code-block"><div class="code-header"><div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><span class="code-lang">${lang}</span><span class="code-copy" data-code="${encodeURIComponent(str)}">复制</span></div><pre><code class="hljs ${lang}">${code}</code></pre></div>`;
+        } catch (__) {}
+      }
+
+      const escapedStr: string = markdownIt.utils.escapeHtml(str);
+      return `<div class="code-block"><div class="code-header"><div class="code-dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><span class="code-lang">plaintext</span><span class="code-copy" data-code="${encodeURIComponent(str)}">复制</span></div><pre><code class="hljs">${escapedStr}</code></pre></div>`;
+    }
+  });
+
+  let rendered = markdownIt.render(processedContent);
+
+  // 计算阅读时间和字数
+  wordCount.value = content.replace(/\s+/g, '').length;
+  readingTime.value = Math.ceil(wordCount.value / 400); // 假设阅读速度400字/分钟
+
+  // 提取目录并更新HTML，确保标题有id
+  const htmlWithIds = extractTOC(rendered);
+
+  // 如果htmlWithIds有值，则使用它，否则使用原始rendered
+  rendered = htmlWithIds || rendered;
+
+  // 添加代码复制功能
+  setTimeout(() => {
+    document.querySelectorAll('.code-copy').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const code = decodeURIComponent(target.getAttribute('data-code') || '');
+        navigator.clipboard.writeText(code).then(() => {
+          target.classList.add('copied');
+          target.textContent = '已复制';
+          setTimeout(() => {
+            target.classList.remove('copied');
+            target.textContent = '复制';
+          }, 2000);
+        });
+      });
+    });
+  }, 100);
+
+  return rendered;
+};
+
+const extractTOC = (html: string): string | null => {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  const headings = div.querySelectorAll('h1, h2, h3, h4');
+  const tocItems: TocItem[] = [];
+
+  headings.forEach((heading: Element, index: number) => {
+    const level = parseInt(heading.tagName.substring(1));
+    const id = heading.id || `heading-${index}`;
+
+    // 确保heading有id属性，用于定位
+    if (!heading.id) {
+      heading.id = id;
+    }
+
+    tocItems.push({
+      id,
+      level,
+      text: heading.textContent
+    });
+  });
+
+  toc.value = tocItems;
+
+  // 返回HTML字符串，以便在DOM中应用修改后的id
+  return div.innerHTML;
+};
+
+const scrollToHeading = (id: string) => {
+  const element = document.getElementById(id);
+  if (element) {
+    // 获取目标元素的位置
+    const rect = element.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // 计算目标滚动位置，考虑顶部间距
+    const targetPosition = scrollTop + rect.top - 100; // 100px的顶部间距
+
+    // 平滑滚动到目标位置
+    window.scrollTo({
+      top: targetPosition,
+      behavior: 'smooth'
+    });
+
+    // 设置当前活动标题
+    activeHeading.value = id;
+
+    // 高亮显示目标元素
+    element.classList.add('highlight-heading');
+    setTimeout(() => {
+      element.classList.remove('highlight-heading');
+    }, 2000);
+  }
+};
+
+const handleScroll = () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  scrollProgress.value = (scrollTop / docHeight) * 100;
+
+  // 更新当前活动的目录项
+  updateActiveHeading();
+};
+
+const updateActiveHeading = () => {
+  if (toc.value.length === 0) return;
+
+  const headings = toc.value.map(item => document.getElementById(item.id));
+  const scrollPosition = window.scrollY + 100;
+
+  for (let i = headings.length - 1; i >= 0; i--) {
+    const element = headings[i];
+    if (element && element.offsetTop <= scrollPosition) {
+      activeHeading.value = toc.value[i].id;
+      break;
+    }
+  }
+};
+
+const backToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+};
+
+const closeNotification = (index: number): void => {
+  if (index === 1) {
+    notifications.value[0] = false;
+  } else if (index === 2) {
+    notifications.value[1] = false;
+  }
+};
+
+// 生命周期钩子
+onMounted(() => {
+  if (route.params.id) {
+    fetchBlogDetail(typeof route.params.id === 'string' ? route.params.id : route.params.id[0]);
+  } else {
+    fetchBlogDetail('1');
+  }
+
+  window.addEventListener('scroll', handleScroll);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
+
+// 监听路由变化
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    fetchBlogDetail(typeof newId === 'string' ? newId : newId[0]);
+  }
+});
+
+// 添加评论相关的响应式变量
+const comments = ref<CommentType[]>([
+  {
+    name: '动漫迷',
+    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+    date: new Date('2023-05-15'),
+    content: '这篇文章真的太棒了，学到了很多关于算法的知识！',
+    likes: 15,
+    liked: false
+  },
+  {
+    name: '编程少女',
+    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+    date: new Date('2023-05-10'),
+    content: '代码示例非常清晰，解释得也很详细。期待更多类似的文章！',
+    likes: 8,
+    liked: false
+  },
+  {
+    name: 'CodeMaster',
+    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+    date: new Date('2023-05-05'),
+    content: '我有个问题，时间复杂度还能再优化吗？',
+    likes: 3,
+    liked: false
+  }
+]);
+
+const newComment = ref<NewCommentType>({
+  name: '',
+  email: '',
+  content: ''
+});
+
+// 点赞功能
+const toggleLike = (index: number): void => {
+  const comment = comments.value[index];
+  if (comment.liked) {
+    comment.likes--;
+  } else {
+    comment.likes++;
+  }
+  comment.liked = !comment.liked;
 };
 
 // 提交评论
 const submitComment = (): void => {
-  if (!commentText.value.trim() || !blog.value) return;
-  
-  // 这里应该调用API提交评论
-  console.log('提交评论:', commentText.value);
-  
-  // 清空评论框
-  commentText.value = '';
-};
-
-// 加载博客详情
-onMounted(async (): Promise<void> => {
-  const blogId = route.params.id as string;
-  
-  if (!blogId) {
-    error.value = '博客ID无效';
-    loading.value = false;
+  if (!newComment.value.name || !newComment.value.content) {
+    alert('昵称和评论内容不能为空！');
     return;
   }
   
-  try {
-    // 加载分类数据
-    await blogStore.fetchCategories();
-    
-    blog.value = await blogStore.fetchBlogById(blogId);
-    
-    if (blog.value) {
-      // 加载相关博客
-      relatedBlogs.value = await blogStore.fetchRelatedBlogs(blogId);
-    } else {
-      error.value = '未找到博客';
-    }
-  } catch (err) {
-    console.error('加载博客详情失败:', err);
-    error.value = err instanceof Error ? err.message : '加载博客详情失败，请刷新页面重试';
-  } finally {
-    loading.value = false;
-  }
+  const comment: CommentType = {
+    name: newComment.value.name,
+    avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`,
+    date: new Date(),
+    content: newComment.value.content,
+    likes: 0,
+    liked: false
+  };
   
-  // 初始化Live2D
-  nextTick(() => {
-    initLive2DWidget();
-  });
-});
-
-// 组件卸载前清理Live2D
-onBeforeUnmount(() => {
-  if (live2dWidget.value) {
-    live2dWidget.value.destroy();
-  }
-});
-
-// 切换搜索输入框
-const toggleSearchInput = (): void => {
-  showSearchInput.value = !showSearchInput.value;
+  comments.value.unshift(comment);
+  
+  // 重置表单
+  newComment.value = {
+    name: '',
+    email: '',
+    content: ''
+  };
 };
 
-// 隐藏搜索输入框
-const hideSearchInput = (): void => {
-  showSearchInput.value = false;
-};
-
-// 执行搜索
-const performSearch = (): void => {
-  // 这里应该实现搜索逻辑
-  console.log('执行搜索，关键词:', searchQuery.value);
+// 添加跳转到相关文章的函数
+const goToPost = (post: PostPreview): void => {
+  if (!post || !post.id) return;
+  // 使用router.push导航到相应博客
+  router.push({ path: `/blog/${post.id}` });
 };
 </script>
 
 <style lang="scss" scoped>
 .blog-detail-container {
+  background-color: #1c1c1c;
+  color: #e0e0e0;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #fff;
-  color: #333;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  position: relative;
 }
 
-.header {
+// 滚动进度条
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffcc00, #ff5722);
+  z-index: 1000;
+  transition: width 0.1s;
+}
+
+// 加载状态
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 204, 0, 0.2);
+    border-top: 3px solid #ffcc00;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 16px;
+    font-size: 16px;
+    color: #bbb;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
+// 错误状态
+.error {
+  text-align: center;
+  padding: 100px 0;
+
+  p {
+    color: #e74c3c;
+    margin-bottom: 20px;
+  }
+
+  .retry-btn {
+    background-color: #ffcc00;
+    color: #1c1c1c;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #e6b800;
+    }
+  }
+}
+
+// 大图标题区
+.hero-section {
   position: relative;
-  height: 80px;
-  
-  .nav {
-    position: fixed;
+  height: 350px;
+  background-size: cover;
+  background-position: center;
+
+  .hero-overlay {
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 0;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 100;
-    background-color: rgba(40, 40, 40, 0.35);
-    backdrop-filter: blur(5px);
-    
-    &.visible {
-      opacity: 1;
-      visibility: visible;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  .hero-content {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: white;
+    padding: 0 20px;
+
+    .blog-title {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
-    
-    .menu-wrapper {
+
+    .author-info {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      max-width: 1120px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 0 20px;
-      position: relative;
-      
-      .menu {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        gap: 30px;
-        
-        a, .dropdown > span {
-          color: #fff;
-          font-size: 15px;
-          position: relative;
-          cursor: pointer;
-          font-weight: 400;
-          padding: 5px 0;
-          text-align: center;
-          
-          &:after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #fff;
-            transition: width 0.3s ease;
-          }
-          
-          &:hover:after, &.router-link-active:after {
-            width: 100%;
-          }
-        }
-        
-        .dropdown {
-          position: relative;
-          
-          .dropdown-content {
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-top: 10px;
-            background-color: rgba(80, 80, 80, 0.5);
-            backdrop-filter: blur(5px);
-            border-radius: 8px;
-            padding: 10px 0;
-            min-width: 120px;
-            display: none;
-            flex-direction: column;
-            z-index: 10;
-            
-            a {
-              padding: 8px 15px;
-              white-space: nowrap;
-              text-align: center;
-              
-              &:after {
-                display: none;
-              }
-              
-              &:hover {
-                background-color: rgba(255, 255, 255, 0.1);
-              }
-            }
-          }
-          
-          &:hover .dropdown-content {
-            display: flex;
-          }
-        }
-      }
-      
-      .right-actions {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        
-        .search-container {
-          position: relative;
-          display: flex;
-          align-items: center;
-          
-          .search-input {
-            width: 200px;
-            height: 32px;
-            border: none;
-            border-radius: 16px;
-            padding: 0 15px;
-            font-size: 14px;
-            outline: none;
-            background-color: rgba(255, 255, 255, 0.15);
-            color: #fff;
-            transition: all 0.3s ease;
-            
-            &::placeholder {
-              color: rgba(255, 255, 255, 0.7);
-            }
-            
-            &:focus {
-              background-color: rgba(255, 255, 255, 0.2);
-              width: 220px;
-            }
-          }
-          
-          .search-btn {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background-color: transparent;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            
-            &:hover {
-              background-color: rgba(255, 255, 255, 0.1);
-            }
-            
-            .search-icon {
-              color: #fff;
-              font-size: 16px;
-            }
-          }
-        }
-        
-        .avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          overflow: hidden;
-          cursor: pointer;
-          border: 2px solid rgba(255, 255, 255, 0.2);
-          transition: border-color 0.2s ease;
-          
-          &:hover {
-            border-color: rgba(255, 255, 255, 0.4);
-          }
-          
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
-      }
-    }
-  }
-}
-
-.blog-header {
-  padding: 60px 0 40px;
-  background-color: #fff;
-  border-bottom: 1px solid #eee;
-  
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-  
-  .blog-title {
-    font-size: 2.2rem;
-    margin-bottom: 15px;
-    font-weight: 700;
-    color: #333;
-  }
-  
-  .blog-meta {
-    display: flex;
-    align-items: center;
-    
-    .category {
-      background-color: #f5f5f5;
-      color: #666;
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 14px;
-      margin-right: 15px;
-    }
-    
-    .date {
-      color: #999;
-      font-size: 14px;
-    }
-  }
-}
-
-.blog-content {
-  flex: 1;
-  
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 40px 20px;
-  }
-  
-  .article-content {
-    margin-bottom: 40px;
-    line-height: 1.8;
-    color: #333;
-    
-    h1, h2, h3, h4, h5, h6 {
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
-      font-weight: 600;
-    }
-    
-    p {
-      margin-bottom: 1rem;
-    }
-    
-    a {
-      color: #3273dc;
-      text-decoration: none;
-      
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-    
-    img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    
-    pre {
-      background-color: #f5f5f5;
-      padding: 15px;
-      border-radius: 5px;
-      overflow-x: auto;
-      margin: 20px 0;
-    }
-    
-    code {
-      font-family: 'Courier New', Courier, monospace;
-      background-color: #f5f5f5;
-      padding: 2px 5px;
-      border-radius: 3px;
-    }
-    
-    blockquote {
-      border-left: 4px solid #ddd;
-      padding-left: 15px;
-      color: #666;
-      margin: 20px 0;
-    }
-    
-    ul, ol {
-      padding-left: 25px;
-      margin: 15px 0;
-    }
-  }
-  
-  .post-tags {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 40px;
-    
-    .tag-item {
-      background-color: #f5f5f5;
-      color: #666;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
-  }
-  
-  .author-info {
-    display: flex;
-    align-items: center;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 40px;
-    
-    .avatar {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      overflow: hidden;
-      margin-right: 20px;
-      
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
-    
-    .author-details {
-      .name {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 5px;
-      }
-      
-      .bio {
-        color: #666;
-        font-size: 14px;
-      }
-    }
-  }
-  
-  .related-posts {
-    margin-bottom: 40px;
-    
-    .related-title {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      font-weight: 600;
-    }
-    
-    .related-list {
-      display: flex;
-      flex-direction: column;
+      justify-content: center;
       gap: 15px;
-    }
-    
-    .related-item {
-      background-color: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      cursor: pointer;
-      transition: transform 0.3s ease;
-      display: flex;
-      
-      &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+
+      .author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid #ffcc00;
       }
-      
-      .related-image {
-        width: 120px;
-        min-width: 120px;
-        height: 80px;
-        
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+
+      .author-name, .publish-date, .blog-views {
+        font-size: 0.9rem;
+        opacity: 0.9;
+
+        i {
+          margin-right: 5px;
         }
       }
-      
-      .related-info {
-        padding: 10px 15px;
-        flex: 1;
-        
-        h4 {
-          font-size: 16px;
-          margin-bottom: 5px;
-          font-weight: 600;
-        }
-        
-        .related-meta {
-          font-size: 13px;
-          color: #666;
-        }
+
+      .publish-date:before, .blog-views:before {
+        content: '•';
+        margin-right: 15px;
+        opacity: 0.7;
       }
-    }
-  }
-  
-  .comments-section {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 30px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    
-    .comments-title {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      font-weight: 600;
-    }
-    
-    .comment-form {
-      margin-bottom: 30px;
-      
-      textarea {
-        width: 100%;
-        padding: 15px;
-        border: 1px solid #eee;
-        border-radius: 5px;
-        resize: vertical;
-        min-height: 120px;
-        font-family: inherit;
-        margin-bottom: 15px;
-      }
-      
-      button {
-        background-color: #3273dc;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-weight: 600;
-        
-        &:hover {
-          background-color: #276cda;
-        }
-      }
-    }
-    
-    .comments-list {
-      .comment-item {
-        display: flex;
-        margin-bottom: 25px;
-        
-        &:last-child {
-          margin-bottom: 0;
-        }
-        
-        .comment-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          overflow: hidden;
-          margin-right: 15px;
-          
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
-        
-        .comment-content {
-          flex: 1;
-          
-          .comment-header {
-            margin-bottom: 8px;
-            
-            .comment-author {
-              font-weight: 600;
-              margin-right: 10px;
-            }
-            
-            .comment-date {
-              font-size: 12px;
-              color: #999;
-            }
-          }
-          
-          .comment-text {
-            font-size: 14px;
-            line-height: 1.6;
-          }
-        }
-      }
-    }
-    
-    .no-comments {
-      text-align: center;
-      padding: 20px 0;
-      color: #999;
     }
   }
 }
 
-.live2d-container {
-  position: fixed;
-  left: 30px;
-  bottom: 30px;
-  z-index: 1000;
+// 通知栏
+.notification-bar {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  
-  #live2d-widget {
-    width: 200px;
-    height: 300px;
-    position: relative;
-    cursor: pointer;
-    
-    canvas {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-    }
-  }
-  
-  .live2d-speech-bubble {
-    position: absolute;
-    top: -60px;
-    left: 50px;
-    min-width: 140px;
-    animation: floatBubble 2s infinite alternate;
-    pointer-events: none;
-    z-index: 1001;
-    
-    .bubble-content {
-      background-color: #fff;
-      padding: 12px 16px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-      font-size: 14px;
-      position: relative;
-      
-      &:after {
-        content: '';
-        position: absolute;
-        bottom: -10px;
-        left: 20px;
-        width: 0;
-        height: 0;
-        border-left: 10px solid transparent;
-        border-right: 10px solid transparent;
-        border-top: 12px solid #fff;
-      }
-    }
-  }
-  
-  .live2d-menu {
-    position: absolute;
-    bottom: 250px;
-    left: 50px;
-    background-color: #fff;
-    border-radius: 15px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    padding: 8px 0;
-    width: 180px;
-    animation: fadeIn 0.3s ease;
-    overflow: hidden;
-    z-index: 1001;
-    
-    .menu-item {
-      padding: 12px 18px;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      transition: all 0.2s ease;
-      
-      &:hover {
-        background-color: #f0f7ff;
-        transform: translateX(5px);
-      }
-      
-      .menu-icon {
-        font-size: 18px;
-        margin-right: 12px;
-      }
-      
-      .menu-text {
-        font-weight: 500;
-      }
-    }
-  }
-}
+  align-items: center;
+  padding: 0;
+  margin: 20px auto;
+  max-width: 900px;
 
-.ai-chat-modal {
-  position: fixed;
-  bottom: 30px;
-  left: 150px;
-  z-index: 1001;
-  animation: slideUp 0.4s;
-  
-  .chat-container {
-    width: 350px;
-    height: 500px;
-    background-color: #fff;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  .notification {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    
-    .chat-header {
-      padding: 16px;
-      background-color: #3273dc;
-      color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      .chat-title {
-        display: flex;
-        align-items: center;
-        font-weight: 600;
-        font-size: 16px;
-        
-        .title-avatar {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          margin-right: 10px;
-          background-color: #fff;
-          object-fit: cover;
-        }
-      }
-      
-      .chat-close {
-        width: 28px;
-        height: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 22px;
-        transition: background-color 0.2s ease;
-        
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-      }
-    }
-    
-    .chat-messages {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background-color: #f9f9f9;
-      
-      .chat-message {
-        display: flex;
-        margin-bottom: 5px;
-        
-        &.user {
-          justify-content: flex-end;
-          
-          .message-content {
-            background-color: #3273dc;
-            color: #fff;
-            border-radius: 18px 18px 0 18px;
-            margin-left: auto;
-          }
-        }
-        
-        &.ai {
-          justify-content: flex-start;
-          
-          .message-content {
-            background-color: #fff;
-            color: #333;
-            border-radius: 18px 18px 18px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-right: auto;
-          }
-        }
-        
-        .message-avatar {
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          overflow: hidden;
-          margin-right: 12px;
-          border: 2px solid #fff;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          
-          img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
-        
-        .message-content {
-          padding: 12px 16px;
-          max-width: 80%;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-      }
-    }
-    
-    .chat-input {
-      padding: 15px;
-      border-top: 1px solid #eee;
-      display: flex;
-      background-color: #fff;
-      
-      input {
-        flex: 1;
-        border: 1px solid #e0e0e0;
-        border-radius: 24px;
-        padding: 12px 18px;
-        font-size: 14px;
-        outline: none;
-        
-        &:focus {
-          border-color: #3273dc;
-          box-shadow: 0 0 0 3px rgba(50, 115, 220, 0.1);
-        }
-      }
-      
-      button {
-        margin-left: 10px;
-        background-color: #3273dc;
-        color: #fff;
-        border: none;
-        border-radius: 24px;
-        padding: 10px 20px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        
-        &:hover {
-          background-color: #2a65c0;
-        }
-      }
-    }
-  }
-}
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    font-size: 14px;
+    color: #e0e0e0;
+    background-color: rgba(44, 44, 44, 0.6);
+    border-left: 4px solid #ffcc00;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 12px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    animation: fadeInDown 0.5s ease;
 
-.loading, .error {
-  text-align: center;
-  padding: 100px 20px;
-  font-size: 18px;
-}
-
-.footer {
-  padding: 30px 20px;
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-  margin-top: auto;
-  
-  .copyright {
-    margin-bottom: 5px;
-  }
-  
-  .powered-by {
-    margin-bottom: 5px;
-  }
-  
-  .icp {
-    font-size: 12px;
-    color: #999;
-  }
-  
-  a {
-    color: #555;
+    &:first-child {
+      border-left-color: #3498db;
+    }
     
     &:hover {
-      color: #000;
+      background-color: rgba(50, 50, 50, 0.7);
+      transform: translateY(-2px);
+    }
+
+    span {
+      display: flex;
+      align-items: center;
+      
+      &:before {
+        content: '';
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        margin-right: 10px;
+        background-image: url('@/assets/images/logo.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 5px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        color: white;
+        transform: rotate(90deg);
+      }
     }
   }
 }
 
-@keyframes floatBubble {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes fadeIn {
+@keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -1423,103 +853,895 @@ const performSearch = (): void => {
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+// 内容布局
+.content-container {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1000px) 300px;
+  gap: 30px;
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: 30px 20px;
 
-@media (max-width: 768px) {
-  .header .nav .menu-wrapper {
-    width: 95%;
-    padding: 0 15px;
-    
-    .menu {
-      position: static;
-      transform: none;
-      justify-content: center;
-      width: 100%;
-      gap: 15px;
-      margin: 0 auto;
-      
-      a, .dropdown > span {
-        font-size: 14px;
-      }
-    }
-    
-    .right-actions {
-      position: absolute;
-      right: 15px;
-      gap: 10px;
-    }
-    
-    .avatar {
-      width: 28px;
-      height: 28px;
-    }
-  }
-  
-  .blog-header {
-    padding: 40px 0 30px;
-    
-    .blog-title {
-      font-size: 1.8rem;
-    }
-  }
-  
-  .related-posts .related-item {
-    flex-direction: column;
-    
-    .related-image {
-      width: 100%;
-      height: 120px;
-    }
-  }
-  
-  .live2d-container {
-    left: 10px;
-    bottom: 10px;
-    
-    #live2d-widget {
-      width: 150px;
-      height: 225px;
-    }
-    
-    .live2d-menu {
-      width: 160px;
-      bottom: 180px;
-      left: 30px;
-    }
-    
-    .live2d-speech-bubble {
-      left: 30px;
-    }
-  }
-  
-  .ai-chat-modal .chat-container {
-    width: 90%;
-    max-width: 350px;
-  }
-}
+  @media (max-width: 1100px) {
+    grid-template-columns: 120px minmax(0, 1fr);
 
-@media (max-width: 576px) {
-  .header .nav .menu-wrapper {
-    .menu {
-      gap: 10px;
-      
-      a, .dropdown > span {
-        font-size: 13px;
-      }
+    .right-sidebar {
+      display: none;
     }
-    
-    .search-btn {
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+
+    .left-sidebar {
       display: none;
     }
   }
 }
-</style> 
+
+// 左侧栏
+.left-sidebar {
+  .live2d-widget {
+    position: sticky;
+    top: 120px;
+    height: 300px;
+  }
+}
+
+// 中间内容
+.main-content {
+  background-color: transparent;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  border: none;
+
+  .blog-content-wrapper {
+    padding: 0;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #e0e0e0;
+
+    // 内容区域的宽度限制
+    > div {
+      max-width: 100%;
+      margin: 0 auto;
+      letter-spacing: 0.3px;
+    }
+
+    // 标题样式
+    :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
+      margin-top: 50px;
+      margin-bottom: 25px;
+      color: white;
+      font-weight: 600;
+      position: relative;
+      scroll-margin-top: 100px; // 跳转时留出顶部空间
+      transition: color 0.3s ease;
+      letter-spacing: 0.5px;
+      line-height: 1.4;
+
+      &.highlight-heading {
+        color: #ffcc00;
+        animation: pulse 2s ease;
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        background-color: rgba(255, 204, 0, 0.1);
+      }
+      50% {
+        background-color: rgba(255, 204, 0, 0.2);
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    :deep(h1) {
+      font-size: 1.8em;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+      color: #ffcc00;
+    }
+
+    :deep(h2) {
+      font-size: 1.5em;
+    }
+
+    :deep(h3) {
+      font-size: 1.3em;
+    }
+
+    :deep(h4) {
+      font-size: 1.1em;
+    }
+
+    // 段落样式
+    :deep(p) {
+      margin-bottom: 24px;
+      text-align: justify;
+      line-height: 1.9;
+      letter-spacing: 0.3px;
+      font-size: 16px;
+    }
+
+    // 链接样式
+    :deep(a) {
+      color: #ffcc00;
+      text-decoration: none;
+      position: relative;
+
+      &:hover {
+        color: #ffdd33;
+      }
+
+      &:after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        transform: scaleX(0);
+        height: 1px;
+        bottom: 0;
+        left: 0;
+        background-color: #ffcc00;
+        transform-origin: bottom right;
+        transition: transform 0.3s ease-out;
+      }
+
+      &:hover:after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+      }
+    }
+
+    // 列表样式
+    :deep(ul), :deep(ol) {
+      margin-bottom: 28px;
+      margin-top: 16px;
+      padding-left: 26px;
+      counter-reset: list-item;
+
+      li {
+        margin-bottom: 12px;
+        line-height: 1.7;
+        position: relative;
+        padding-left: 4px;
+      }
+
+      li::before {
+        content: '';
+        position: absolute;
+        left: -14px;
+        top: 10px;
+        width: 6px;
+        height: 6px;
+        background-color: rgba(255, 204, 0, 0.7);
+        border-radius: 50%;
+      }
+    }
+
+    :deep(ol) {
+      counter-reset: item;
+
+      li {
+        counter-increment: item;
+        position: relative;
+        padding-left: 4px;
+      }
+
+      li::before {
+        content: counter(item) ".";
+        position: absolute;
+        left: -20px;
+        top: 0;
+        background-color: transparent;
+        color: rgba(255, 204, 0, 0.8);
+        font-weight: bold;
+        border-radius: 0;
+        width: auto;
+        height: auto;
+      }
+    }
+
+    // 引用样式
+    :deep(blockquote) {
+      background-color: rgba(44, 44, 44, 0.5);
+      border-left: 4px solid rgba(255, 204, 0, 0.7);
+      padding: 20px;
+      margin: 30px 0;
+      color: #d0d0d0;
+      font-style: italic;
+      font-size: 15px;
+      line-height: 1.7;
+      letter-spacing: 0.3px;
+      border-radius: 0 4px 4px 0;
+  position: relative;
+
+      p {
+        margin-bottom: 0;
+      }
+
+      &::before {
+        content: '"';
+        font-size: 28px;
+        color: rgba(255, 204, 0, 0.4);
+        position: absolute;
+        left: 10px;
+  top: 0;
+      }
+    }
+
+    // 代码样式
+    :deep(.code-block) {
+      margin: 25px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #161b22;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+      .code-header {
+        display: flex;
+        align-items: center;
+        background-color: #0d1117;
+        padding: 8px 12px;
+        border-bottom: 1px solid #30363d;
+
+        .code-dots {
+          display: flex;
+          gap: 6px;
+          margin-right: 15px;
+
+          .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+
+            &.red { background-color: #ff5f56; }
+            &.yellow { background-color: #ffbd2e; }
+            &.green { background-color: #27c93f; }
+          }
+        }
+
+        .code-lang {
+          flex: 1;
+          font-size: 12px;
+          color: #8b949e;
+        }
+
+        .code-copy {
+          font-size: 12px;
+          color: #8b949e;
+          cursor: pointer;
+          padding: 2px 6px;
+          border-radius: 4px;
+
+          &:hover {
+            background-color: #30363d;
+            color: #c9d1d9;
+          }
+
+          &.copied {
+            color: #27c93f;
+          }
+        }
+      }
+
+      /* 强制增强特异性 */
+      pre, pre code, .hljs {
+        &::-webkit-scrollbar {
+          height: 2px !important; 
+          width: 2px !important;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #161b22 !important;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: rgba(255, 204, 0, 0.5) !important; /* 黄色滚动条 */
+          border-radius: 0 !important;
+          border: none !important;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 204, 0, 0.8) !important; /* 黄色滚动条悬停状态 */
+        }
+      }
+
+      pre {
+        margin: 0;
+        padding: 12px;
+        overflow-x: auto;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        max-width: 100%;
+        width: 100%;
+
+        code {
+          background: transparent;
+          padding: 0;
+          white-space: pre;
+          word-break: normal;
+          word-wrap: normal;
+          width: auto;
+          max-width: initial;
+        }
+      }
+    }
+
+    // 内联代码
+    :deep(code:not(pre code)) {
+      background-color: rgba(40, 40, 40, 0.5);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.9em;
+      color: #ff9580;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    // 表格样式
+    :deep(table) {
+  width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      font-size: 15px;
+      border: 1px solid #2c2c2c;
+
+      th, td {
+        border: 1px solid #2c2c2c;
+        padding: 14px 18px;
+        text-align: left;
+      }
+
+      th {
+        background-color: rgba(31, 41, 55, 0.7);
+        font-weight: 600;
+        color: #ffcc00;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+      }
+
+      tr:nth-child(even) {
+        background-color: rgba(40, 40, 40, 0.4);
+      }
+
+      tr:hover {
+        background-color: rgba(50, 50, 50, 0.5);
+      }
+    }
+
+    // 图片样式
+    :deep(img) {
+      max-width: 100%;
+  border-radius: 6px;
+      margin: 20px 0;
+      display: block;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    // 知识共享协议
+    .license-section {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #1c1c1c;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .license-container {
+  display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .license-img {
+      width: 88px;
+      height: 31px;
+    }
+
+    .license-text {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .license-text a {
+      color: #ffcc00;
+      text-decoration: none;
+    }
+
+    .license-text a:hover {
+      text-decoration: underline;
+    }
+
+    // 标签容器
+    .blog-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 30px;
+      padding: 15px 0;
+    }
+
+    .tag-label {
+      font-size: 14px;
+      margin-right: 10px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      margin: 0 5px 5px 0;
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      border-radius: 3px;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .tag:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    // 相关推荐
+    .related-posts-section {
+      margin-top: 40px;
+      padding: 20px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .related-posts-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      color: #fff;
+    }
+
+    .related-posts-container {
+      display: flex;
+      gap: 20px;
+      justify-content: space-between;
+    }
+
+    .related-post-card {
+      width: calc(50% - 10px);
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 15px 20px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .related-post-card:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .related-post-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffcc00;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .related-post-title {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.3;
+      color: #e0e0e0;
+    }
+
+    .prev-post {
+      text-align: left;
+    }
+
+    .next-post {
+      text-align: right;
+    }
+
+    // 评论区
+    .comments-section {
+      margin-top: 40px;
+      padding: 20px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .comments-title {
+      font-size: 16px;
+  font-weight: 600;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .comments-list {
+      margin-bottom: 30px;
+    }
+
+    .comment-item {
+      display: flex;
+      margin-bottom: 25px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .comment-avatar {
+      width: 36px;
+      height: 36px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .comment-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .comment-content {
+      flex: 1;
+    }
+
+    .comment-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .comment-name {
+  font-weight: 600;
+      margin-right: 10px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .comment-date {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .comment-text {
+      margin-bottom: 12px;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+    }
+
+    .comment-actions {
+      display: flex;
+    }
+
+    .like-button, .reply-button {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      cursor: pointer;
+      margin-right: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .heart-icon {
+      margin-right: 5px;
+      font-size: 12px;
+    }
+
+    .like-button:hover, .reply-button:hover {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .like-button.liked {
+      color: #ff6b6b;
+    }
+
+    // 评论表单样式
+    .comment-form {
+      background-color: rgba(255, 255, 255, 0.03);
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .form-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      flex: 1;
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+    }
+
+    .required {
+      color: #ff6b6b;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.3);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .submit-button {
+      display: inline-block;
+      padding: 6px 16px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-button:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+
+// 右侧栏
+.right-sidebar {
+  .catalog, .categories {
+    background-color: transparent;
+    border-radius: 0;
+    margin-bottom: 30px;
+    overflow: hidden;
+    border: none;
+    box-shadow: none;
+    position: sticky;
+    top: 20px;
+  }
+
+  .catalog-title, .categories-title {
+    font-size: 20px;
+    font-weight: 600;
+  color: white;
+    padding: 12px 0;
+    background-color: transparent;
+    margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+
+    .category-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      background-color: transparent;
+      color: #ffcc00;
+      border-radius: 0;
+      margin-right: 12px;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .category-title-text {
+      font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .catalog-list, .category-list {
+    list-style: none;
+    padding: 0 0 0 4px;
+    margin: 0;
+    max-height: 600px; // 增加目录最大高度
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    li {
+      padding: 10px 0;
+      cursor: pointer;
+      color: rgba(230, 230, 230, 0.7);
+      font-size: 15px;
+      transition: all 0.25s ease;
+      border-left: 3px solid transparent;
+      margin-bottom: 4px;
+      border-radius: 0 4px 4px 0;
+
+      &:hover {
+        background-color: rgba(44, 44, 44, 0.3);
+        color: #ffcc00;
+        border-left-color: rgba(255, 204, 0, 0.5);
+        padding-left: 12px;
+      }
+
+      &.active, .category-item-text.active {
+        color: #ffcc00;
+        background-color: rgba(44, 44, 44, 0.5);
+        border-left-color: #ffcc00;
+        padding-left: 12px;
+        font-weight: 500;
+      }
+
+      .category-item-text {
+        display: block;
+
+        &.category-level-1 {
+          padding-left: 15px;
+          font-size: 13px;
+          position: relative;
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 8px;
+            height: 1px;
+            background-color: #666;
+          }
+        }
+      }
+    }
+  }
+
+  .catalog-list {
+    li {
+      &.level-1 {
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      &.level-2 {
+        padding-left: 20px;
+      }
+      &.level-3 {
+        padding-left: 40px;
+        font-size: 14px;
+      }
+      &.level-4 {
+        padding-left: 60px;
+        font-size: 13px;
+      }
+
+      &.active, &:hover {
+        &.level-1 { padding-left: 12px; }
+        &.level-2 { padding-left: 32px; }
+        &.level-3 { padding-left: 52px; }
+        &.level-4 { padding-left: 72px; }
+      }
+    }
+  }
+
+  .empty-toc {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+    font-style: italic;
+  }
+}
+
+// 回到顶部
+  .back-to-top {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+    width: 40px;
+    height: 40px;
+  background-color: rgba(255, 204, 0, 0.8);
+  color: #1c1c1c;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #ffcc00;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+// 动画
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// 页脚样式
+:deep(.app-footer) {
+  background-color: #1c1c1c;
+  margin-top: 50px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+</style>
+
+

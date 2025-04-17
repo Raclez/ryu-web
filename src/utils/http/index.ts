@@ -2,14 +2,14 @@ import { AxiosHttpClient } from './axios';
 import { CreateAxiosOptions } from './types';
 
 // 开发环境
-const isDev = process.env.NODE_ENV === 'development';
+// const isDev = process.env.NODE_ENV === 'development';
 
 // 默认配置
 const defaultOptions: CreateAxiosOptions = {
   // 请求超时时间
   timeout: 10000,
   // 接口地址
-  baseURL: isDev ? 'http://localhost:8080/api' : 'https://api.example.com/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   // 请求配置
   requestOptions: {
     // 是否携带token
@@ -64,4 +64,4 @@ export * from './types';
 export { AxiosHttpClient };
 
 // 默认导出
-export default http; 
+export default http;

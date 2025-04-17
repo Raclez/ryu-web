@@ -1,20 +1,24 @@
 /**
  * 博客文章类型定义
  */
-export interface Blog {
+export interface BaseBlog {
   id: string;
   title: string;
-  content: string;
-  date: string;
   createTime: string;
-  heat: number;
-  tags: string[];
-  category: string;
-  image: string;
-  coverImage: string;
-  toc: string;
-  author: Author;
+  views: number;
+  tagsName: string[];
+  categoryName: string;
+  coverImageUrl: string;
+  excerpt: string;
   comments?: Comment[];
+}
+
+/**
+ * 博客详情类型定义，扩展自BaseBlog
+ */
+export interface BlogDetail extends BaseBlog {
+  markdown: string;
+  author?: Author;
 }
 
 /**
@@ -87,4 +91,13 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
   list: T[];
-} 
+}
+
+/**
+ * 游标分页响应类型
+ */
+export interface CursorPaginatedResponse<T> {
+  list: T[];
+  cursor: string;
+  hasMore: boolean;
+}

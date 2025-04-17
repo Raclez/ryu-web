@@ -5,6 +5,7 @@
         <component :is="Component" />
       </keep-alive>
     </router-view>
+    <Live2DWidget />
   </div>
 </template>
 
