@@ -23,6 +23,30 @@ fi
 echo -e "${YELLOW}清理旧的Docker镜像...${NC}"
 docker rmi ryu-web:$ENV 2>/dev/null || true
 
+# 先执行对应环境的构建
+echo -e "${YELLOW}先执行本地构建，确保生成正确的构建目录...${NC}"
+if [ "$ENV" = "development" ]; then
+  pnpm run build || { echo -e "${RED}本地构建失败${NC}"; exit 1; }
+elif [ "$ENV" = "test" ]; then
+  pnpm run build:test || { echo -e "${RED}本地构建失败${NC}"; exit 1; }
+elif [ "$ENV" = "staging" ]; then
+  pnpm run build:staging || { echo -e "${RED}本地构建失败${NC}"; exit 1; }
+else
+  pnpm run build:prod || { echo -e "${RED}本地构建失败${NC}"; exit 1; }
+fi
+
+# 检查构建目录是否存在
+if [ ! -d "dist-$ENV" ]; then
+  echo -e "${YELLOW}警告: dist-$ENV 目录不存在，检查是否有 dist 目录${NC}"
+  if [ -d "dist" ]; then
+    echo -e "${YELLOW}发现 dist 目录，将其复制为 dist-$ENV${NC}"
+    cp -r dist "dist-$ENV"
+  else
+    echo -e "${RED}错误: 没有找到任何构建输出目录${NC}"
+    exit 1
+  fi
+fi
+
 # 构建新镜像
 echo -e "${BLUE}开始构建Docker镜像...${NC}"
 echo -e "${YELLOW}执行: docker build --no-cache --build-arg BUILD_ENV=$ENV -t ryu-web:$ENV .${NC}"

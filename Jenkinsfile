@@ -97,6 +97,21 @@ pipeline {
             when { expression { return !params.SKIP_BUILD } }
             steps {
                 script {
+                    // 确保构建目录存在
+                    sh """
+                        set -e
+                        echo "检查构建目录..."
+                        if [ -d "dist-${DEPLOY_ENV}" ]; then
+                            echo "构建目录 dist-${DEPLOY_ENV} 已存在"
+                        elif [ -d "dist" ]; then
+                            echo "dist-${DEPLOY_ENV} 不存在，但找到 dist 目录，复制它"
+                            cp -r dist dist-${DEPLOY_ENV}
+                        else
+                            echo "错误: 没有找到构建输出目录"
+                            exit 1
+                        fi
+                    """
+                    
                     // 构建Docker镜像，传递环境参数，添加--no-cache选项避免缓存问题
                     sh "docker build --no-cache --build-arg BUILD_ENV=${DEPLOY_ENV} -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:${DEPLOY_ENV}-latest ."
                 }

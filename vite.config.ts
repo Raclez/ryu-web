@@ -35,6 +35,31 @@ export default defineConfig(({ command, mode }) => {
       outDir: `dist-${mode}`,
       // 在生产环境中禁用源映射以提高构建速度
       sourcemap: mode !== 'production',
+      // 增加警告限制，减少大文件警告
+      chunkSizeWarningLimit: 1000,
+      // 配置Rollup选项
+      rollupOptions: {
+        output: {
+          // 手动拆分代码块
+          manualChunks: {
+            // 将vue相关库打包成一个chunk
+            'vue-vendor': ['vue', 'vue-router', 'pinia'],
+            // 将markdown相关库打包成一个chunk
+            'markdown': ['markdown-it', 'markdown-it-anchor', 'markdown-it-container', 
+                         'markdown-it-emoji', 'markdown-it-prism', 'markdown-it-task-lists'],
+            // 将其他大型库分开打包
+            'highlight': ['highlight.js'],
+            'shiki': ['shiki'],
+            'editor': ['md-editor-v3']
+          },
+          // 用于从入口点创建的块的打包输出格式
+          entryFileNames: 'assets/[name].[hash].js',
+          // 用于代码块的打包输出格式
+          chunkFileNames: 'assets/[name].[hash].js',
+          // 用于静态资源的输出格式
+          assetFileNames: 'assets/[name].[hash].[ext]'
+        }
+      }
     },
     // 定义全局常量替换
     define: {

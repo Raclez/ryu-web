@@ -20,7 +20,8 @@ RUN pnpm install
 COPY . .
 
 # 根据环境构建应用
-RUN if [ "$BUILD_ENV" = "development" ]; then \
+RUN echo "Building for environment: $BUILD_ENV" && \
+    if [ "$BUILD_ENV" = "development" ]; then \
         pnpm run build; \
     elif [ "$BUILD_ENV" = "test" ]; then \
         pnpm run build:test; \
@@ -28,6 +29,17 @@ RUN if [ "$BUILD_ENV" = "development" ]; then \
         pnpm run build:staging; \
     else \
         pnpm run build:prod; \
+    fi && \
+    ls -la /app/dist* || true && \
+    # 确保构建后的目录存在，如果不存在则使用dist目录
+    if [ -d "/app/dist-$BUILD_ENV" ]; then \
+        echo "Using /app/dist-$BUILD_ENV directory"; \
+    elif [ -d "/app/dist" ]; then \
+        echo "dist-$BUILD_ENV not found, copying from dist directory"; \
+        cp -r /app/dist /app/dist-$BUILD_ENV; \
+    else \
+        echo "ERROR: No build output directory found"; \
+        exit 1; \
     fi
 
 # 生产阶段
