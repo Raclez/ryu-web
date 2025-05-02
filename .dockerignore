@@ -1,0 +1,34 @@
+# 排除node_modules目录
+node_modules
+
+# 排除构建输出目录
+dist
+dist-*
+
+# 排除git相关文件
+.git
+.gitignore
+
+# 排除编辑器配置文件
+.idea
+.vscode
+*.swp
+*.swo
+
+# 排除日志文件
+*.log
+logs
+
+# 排除环境变量文件（如果需要在构建时使用环境变量，请注释掉这一行）
+# .env*
+
+# 排除Docker相关文件
+.dockerignore
+docker-compose*.yml
+
+# 排除其他文件
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log* 

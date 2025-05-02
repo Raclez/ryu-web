@@ -10,14 +10,16 @@ RUN npm install -g pnpm
 # 设置工作目录
 WORKDIR /app
 
-# 复制package.json和pnpm-lock.yaml
+# 首先只复制依赖相关文件
 COPY package.json pnpm-lock.yaml ./
 
 # 安装依赖
 RUN pnpm install
 
-# 复制源代码
+# 然后复制源代码，排除node_modules
 COPY . .
+# 确保node_modules不会被覆盖
+RUN rm -rf /app/node_modules && ln -s /app/node_modules /app/node_modules
 
 # 根据环境构建应用
 RUN if [ "$BUILD_ENV" = "development" ]; then \

@@ -97,8 +97,8 @@ pipeline {
             when { expression { return !params.SKIP_BUILD } }
             steps {
                 script {
-                    // 构建Docker镜像，传递环境参数
-                    sh "docker build --build-arg BUILD_ENV=${DEPLOY_ENV} -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:${DEPLOY_ENV}-latest ."
+                    // 构建Docker镜像，传递环境参数，添加--no-cache选项避免缓存问题
+                    sh "docker build --no-cache --build-arg BUILD_ENV=${DEPLOY_ENV} -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:${DEPLOY_ENV}-latest ."
                 }
             }
         }

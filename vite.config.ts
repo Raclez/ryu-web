@@ -32,7 +32,7 @@ export default defineConfig(({ command, mode }) => {
     },
     // 为不同环境构建不同的输出目录
     build: {
-      outDir: mode === 'production' ? 'dist-production' : `dist-${mode}`,
+      outDir: `dist-${mode}`,
       // 在生产环境中禁用源映射以提高构建速度
       sourcemap: mode !== 'production',
     },
