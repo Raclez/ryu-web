@@ -115,6 +115,12 @@
       </div>
     </main>
 
+    <!-- 替换回到顶部按钮为动漫风格 -->
+    <div class="anime-back-to-top" :class="{ 'visible': showBackToTop }" @click="scrollToTop">
+      <div class="anime-character"></div>
+      <div class="pull-text">拉我回顶部~</div>
+    </div>
+
     <footer class="footer">
       <div class="copyright">
         © {{ new Date().getFullYear() }} Ryu
@@ -142,12 +148,21 @@ const isNavVisible = ref<boolean>(false);
 const showSearchInput = ref<boolean>(false);
 const searchQuery = ref<string>('');
 const scrollY = ref<number>(0);
+const showBackToTop = ref<boolean>(false);
 const navOpacity = computed(() => {
   // 根据滚动位置计算导航栏透明度
   if (scrollY.value < 50) return 0.35; // 顶部时半透明
   if (scrollY.value > 200) return 0.75; // 滚动200px后更不透明
   return 0.35 + (scrollY.value - 50) / 150 * 0.4; // 在50-200px之间线性变化
 });
+
+// 回到顶部功能
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+};
 
 // 随机评论数
 const randomComments = (): number => {
@@ -188,6 +203,9 @@ const handleScroll = (): void => {
   // 当用户滚动页面时自动显示导航栏
   if (scrollY.value > 100) {
     isNavVisible.value = true;
+    showBackToTop.value = true;
+  } else {
+    showBackToTop.value = false;
   }
 };
 
@@ -676,12 +694,12 @@ onBeforeUnmount(() => {
       padding: 20px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: flex-start;
       width: 100%;
       height: 100%;
       position: relative;
-
+      
       .blog-title {
         font-size: 1.5rem;
         margin-bottom: 15px;
@@ -691,13 +709,13 @@ onBeforeUnmount(() => {
         line-height: 1.3;
         font-weight: bold;
       }
-
+      
       .blog-desc {
         color: #bbb;
         font-size: 0.95rem;
         line-height: 1.5;
-        margin: auto 0;
-        padding: 20px 0;
+        margin-bottom: 40px; /* 给底部元数据腾出空间 */
+        padding: 10px 0;
         text-align: left;
         font-family: 'SimSun', 'Noto Sans SC', sans-serif;
         display: -webkit-box;
@@ -705,45 +723,57 @@ onBeforeUnmount(() => {
         -webkit-line-clamp: 3;
         overflow: hidden;
         text-overflow: ellipsis;
-        flex-grow: 1;
-      }
-
-      .blog-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 10px;
         width: 100%;
-        justify-content: flex-end;
       }
-
-      .blog-meta > span {
+      
+      .blog-meta {
+        position: absolute;
+        bottom: 15px;
+        right: 20px;
+        left: 20px;
         display: flex;
+        justify-content: flex-end;
         align-items: center;
-        padding: 4px 8px;
+        gap: 8px;
+        height: 30px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+      
+      .blog-meta > span {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
         background-color: rgba(40, 40, 40, 0.7);
         border-radius: 15px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         transition: transform 0.3s ease;
+        white-space: nowrap;
+        flex: 0 0 auto;
       }
-
+      
       .blog-meta i {
         margin-right: 5px;
       }
-
+      
       .blog-date {
         color: #ffcc80;
       }
-
+      
       .blog-views {
         color: #80cbc4;
       }
-
+      
       .blog-comments {
         color: #ce93d8;
       }
-
+      
       .blog-category {
         color: #90caf9;
       }
@@ -929,23 +959,48 @@ onBeforeUnmount(() => {
 
       .blog-info {
         padding: 20px;
-
+        position: relative;
+        
         .blog-title {
           font-size: 18px;
           margin-bottom: 12px;
         }
-
+        
         .blog-desc {
           font-size: 14px;
           -webkit-line-clamp: 2;
-          margin-bottom: 15px;
+          margin-bottom: 40px; // 确保在移动设备上也有足够空间
         }
-
+        
         .blog-meta {
-          gap: 8px;
+          // 使用绝对定位在各种设备上保持一致
+          position: absolute;
+          bottom: 12px;
+          right: 15px;
+          left: 15px;
+          height: 28px;
+          justify-content: flex-end;
+          gap: 6px;
+        }
+        
+        .blog-meta > span {
+          font-size: 0.7rem;
+          padding: 3px 6px;
         }
       }
     }
+  }
+
+  // 适配小屏幕的回到顶部按钮
+  .anime-back-to-top {
+    width: 60px;
+    height: 80px;
+    right: 20px;
+  }
+  
+  .pull-text {
+    font-size: 10px;
+    padding: 3px 6px;
   }
 }
 
@@ -977,17 +1032,22 @@ onBeforeUnmount(() => {
 
     .blog-info {
       padding: 15px 20px;
-
+      
       .blog-title {
         font-size: 17px;
       }
-
+      
       .blog-meta {
-        font-size: 12px;
-
-        .blog-date, .blog-views, .blog-category {
-          padding: 3px 8px;
-        }
+        bottom: 10px;
+        right: 15px;
+        left: 15px;
+        height: 26px;
+        gap: 5px;
+      }
+      
+      .blog-meta > span {
+        padding: 2px 6px;
+        font-size: 0.65rem;
       }
     }
   }
@@ -1494,35 +1554,6 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 .right-actions {
   display: flex;
   align-items: center;
@@ -1758,12 +1789,12 @@ onBeforeUnmount(() => {
       padding: 20px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: flex-start;
       width: 100%;
       height: 100%;
       position: relative;
-
+      
       .blog-title {
         font-size: 1.5rem;
         margin-bottom: 15px;
@@ -1773,13 +1804,13 @@ onBeforeUnmount(() => {
         line-height: 1.3;
         font-weight: bold;
       }
-
+      
       .blog-desc {
         color: #bbb;
         font-size: 0.95rem;
         line-height: 1.5;
-        margin: auto 0;
-        padding: 20px 0;
+        margin-bottom: 40px; /* 给底部元数据腾出空间 */
+        padding: 10px 0;
         text-align: left;
         font-family: 'SimSun', 'Noto Sans SC', sans-serif;
         display: -webkit-box;
@@ -1787,45 +1818,57 @@ onBeforeUnmount(() => {
         -webkit-line-clamp: 3;
         overflow: hidden;
         text-overflow: ellipsis;
-        flex-grow: 1;
-      }
-
-      .blog-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 10px;
         width: 100%;
-        justify-content: flex-end;
       }
-
-      .blog-meta > span {
+      
+      .blog-meta {
+        position: absolute;
+        bottom: 15px;
+        right: 20px;
+        left: 20px;
         display: flex;
+        justify-content: flex-end;
         align-items: center;
-        padding: 4px 8px;
+        gap: 8px;
+        height: 30px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+      
+      .blog-meta > span {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
         background-color: rgba(40, 40, 40, 0.7);
         border-radius: 15px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         transition: transform 0.3s ease;
+        white-space: nowrap;
+        flex: 0 0 auto;
       }
-
+      
       .blog-meta i {
         margin-right: 5px;
       }
-
+      
       .blog-date {
         color: #ffcc80;
       }
-
+      
       .blog-views {
         color: #80cbc4;
       }
-
+      
       .blog-comments {
         color: #ce93d8;
       }
-
+      
       .blog-category {
         color: #90caf9;
       }
@@ -1894,6 +1937,88 @@ onBeforeUnmount(() => {
     40% { 
       transform: scale(1.0);
     } 
+  }
+}
+
+// 回到顶部按钮样式
+.back-to-top {
+  display: none; /* 隐藏原按钮 */
+}
+
+.anime-back-to-top {
+  position: fixed;
+  right: 30px;
+  bottom: -60px;
+  width: 70px;
+  height: 90px;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  z-index: 100;
+  transform: translateY(0);
+}
+
+.anime-back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  bottom: 20px;
+}
+
+.anime-character {
+  width: 100%;
+  height: 70px;
+  background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><circle cx="50" cy="40" r="30" fill="%23ffcc00"/><circle cx="40" cy="35" r="5" fill="%23222"/><circle cx="60" cy="35" r="5" fill="%23222"/><path d="M40 55 Q50 65 60 55" stroke="%23222" stroke-width="3" fill="none"/><path d="M10 70 Q50 120 90 70" fill="%23ffcc00"/></svg>');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: transform 0.3s ease;
+}
+
+.anime-back-to-top:hover .anime-character {
+  transform: translateY(-10px);
+  animation: wiggle 1s infinite;
+}
+
+.pull-text {
+  text-align: center;
+  background-color: rgba(255, 204, 0, 0.8);
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: translateY(-10px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .anime-back-to-top {
+    width: 60px;
+    height: 80px;
+    right: 20px;
+  }
+  
+  .pull-text {
+    font-size: 10px;
+    padding: 3px 6px;
   }
 }
 </style>

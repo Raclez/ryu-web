@@ -30,3 +30,15 @@ export async function getBlogByCursor(params: BlogPaginationParams = { cursor: '
 export async function getBlogDetail(id: string): Promise<ResponseBody<BlogDetail>> {
     return http.get(`/ryu-content/posts/detail/${id}`);
 }
+
+
+/**
+ * 获取推荐博客
+ * @param postId 博客ID
+ * @param limit 限制数量
+ * @returns 推荐博客响应
+ */
+
+export async function getRecommendBlog(postId: string, limit: number ): Promise<ResponseBody<BlogDetail>> {
+  return http.get(`/ryu-content/posts/related/${postId}/${limit}`);
+}

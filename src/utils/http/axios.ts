@@ -41,7 +41,7 @@ export class AxiosHttpClient {
         if (requestOptions.withToken !== false) {
           //TODO
           // const token = localStorage.getItem('token');
-          const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOjEsInJuU3RyIjoiU09MNDRUTTBpU0VObEFvaUwybTlYMTlkcGxra0lPRzUifQ.X_YzuQbrA_n4WFexQPzMUTVIloxvFUc3KgOSIQeKJZY"
+          const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOjEsInJuU3RyIjoiaVg0SjlNNm1hZFdYM0hRNFRYRVdteklmNVNTak1lUnYifQ.RLk35cfvgJle8W9jrWQH-H3HT3J4Jegeahq04sK1b0I"
           if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
           }

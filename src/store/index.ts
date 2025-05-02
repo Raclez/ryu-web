@@ -32,7 +32,7 @@ export const useBlogStore = defineStore('blog', () => {
             const res = await getBlogByCursor(params)
             console.log("blogs", res.data)
 
-            if (res.success) {
+            if (res.code === 200) {
                 if (res.data && Array.isArray(res.data.list)) {
                     blogs.value = res.data.list || []
                     cursor.value = res.data.cursor || ''
@@ -85,7 +85,7 @@ export const useBlogStore = defineStore('blog', () => {
             const res = await getBlogByCursor(params)
             console.log("loadMore blogs:", res.data)
 
-            if (res.success) {
+            if (res.code === 200) {
                 if (res.data && Array.isArray(res.data.list)) {
                     blogs.value = [...blogs.value, ...res.data.list]
                     cursor.value = res.data.cursor || ''
@@ -127,7 +127,7 @@ export const useBlogStore = defineStore('blog', () => {
             loading.value = true
             const res = await getBlogDetail(id)
             console.log("blog detail:", res)
-            if (res.success) {
+            if (res.code === 200) {
                 currentBlog.value = res.data
                 return res.data
             } else {

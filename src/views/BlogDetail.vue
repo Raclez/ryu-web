@@ -79,60 +79,112 @@
               <h3 class="related-posts-title">相关推荐</h3>
               <div class="related-posts-container">
                 <div v-if="prevPost" class="related-post-card prev-post" @click="goToPost(prevPost)">
-                  <div class="related-post-label">PREVIOUS POST</div>
-                  <div class="related-post-title">{{ prevPost.title }}</div>
+                  <div class="related-post-image">
+                    <img :src="prevPost.coverImageUrl" :alt="prevPost.title" />
+                    <div class="related-post-overlay">
+                      <div class="related-post-label">PREVIOUS POST</div>
+                      <div class="related-post-title">{{ prevPost.title }}</div>
+                    </div>
+                  </div>
                 </div>
                 <div v-if="nextPost" class="related-post-card next-post" @click="goToPost(nextPost)">
-                  <div class="related-post-label">NEXT POST</div>
-                  <div class="related-post-title">{{ nextPost.title }}</div>
+                  <div class="related-post-image">
+                    <img :src="nextPost.coverImageUrl" :alt="nextPost.title" />
+                    <div class="related-post-overlay">
+                      <div class="related-post-label">NEXT POST</div>
+                      <div class="related-post-title">{{ nextPost.title }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           
             <!-- 添加评论区部分 -->
             <div class="comments-section">
-              <h3 class="comments-title">评论 ({{ comments.length }})</h3>
+              <h3 class="comments-title">
+                <span class="comments-icon">💬</span>
+                评论 ({{ comments.length }})
+                <span class="title-decoration"></span>
+              </h3>
               
               <!-- 评论列表 -->
               <div class="comments-list">
-                <div v-for="(comment, index) in comments" :key="index" class="comment-item">
-                  <div class="comment-avatar">
-                    <img :src="comment.avatar" :alt="comment.name">
-                  </div>
-                  <div class="comment-content">
-                    <div class="comment-header">
-                      <span class="comment-name">{{ comment.name }}</span>
-                      <span class="comment-date">{{ formatCommentDate(comment.date) }}</span>
+                <transition-group name="comment-fade">
+                  <div v-for="(comment, index) in comments" :key="index" class="comment-item">
+                    <div class="comment-avatar">
+                      <img :src="comment.avatar" :alt="comment.name">
+                      <div class="avatar-glow"></div>
                     </div>
-                    <div class="comment-text">{{ comment.content }}</div>
-                    <div class="comment-actions">
-                      <button @click="toggleLike(index)" class="like-button" :class="{ 'liked': comment.liked }">
-                        <i class="heart-icon">❤️</i> {{ comment.likes }}
-                      </button>
-                      <button class="reply-button">回复</button>
+                    <div class="comment-content">
+                      <div class="comment-header">
+                        <div class="comment-info">
+                          <span class="comment-name">{{ comment.name }}</span>
+                          <span class="comment-date">{{ formatCommentDate(comment.date) }}</span>
+                        </div>
+                        <div class="comment-actions">
+                          <button @click="toggleLike(index)" class="like-button" :class="{ 'liked': comment.liked }">
+                            <i class="heart-icon">❤️</i> 
+                            <span class="like-count">{{ comment.likes }}</span>
+                          </button>
+                          <button class="reply-button">
+                            <i class="reply-icon">↩️</i>
+                            <span>回复</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="comment-text">{{ comment.content }}</div>
                     </div>
                   </div>
-                </div>
+                </transition-group>
               </div>
               
               <!-- 评论表单 -->
               <div class="comment-form">
-                <h4 class="form-title">发表评论</h4>
+                <div class="form-decorations">
+                  <div class="decoration-star decoration-star-1"></div>
+                  <div class="decoration-star decoration-star-2"></div>
+                  <div class="decoration-star decoration-star-3"></div>
+                </div>
+                <h4 class="form-title">
+                  <span class="form-icon">✏️</span>
+                  发表评论
+                </h4>
                 <div class="form-row">
                   <div class="form-group">
                     <label for="name">昵称 <span class="required">*</span></label>
-                    <input type="text" id="name" v-model="newComment.name" placeholder="请输入您的昵称">
+                    <div class="input-wrapper">
+                      <span class="input-icon">👤</span>
+                      <input type="text" id="name" v-model="newComment.name" placeholder="请输入您的昵称">
+                    </div>
                   </div>
                   <div class="form-group">
                     <label for="email">邮箱</label>
-                    <input type="email" id="email" v-model="newComment.email" placeholder="请输入您的邮箱（选填）">
+                    <div class="input-wrapper">
+                      <span class="input-icon">📧</span>
+                      <input type="email" id="email" v-model="newComment.email" placeholder="请输入您的邮箱（选填）">
+                    </div>
                   </div>
                 </div>
                 <div class="form-group">
                   <label for="comment">评论内容 <span class="required">*</span></label>
-                  <textarea id="comment" v-model="newComment.content" placeholder="请输入您的评论"></textarea>
+                  <div class="textarea-wrapper">
+                    <textarea id="comment" v-model="newComment.content" placeholder="请输入您的评论，支持友善的讨论~"></textarea>
+                    <div class="textarea-decoration">
+                      <div class="anime-decoration"></div>
+                    </div>
+                  </div>
                 </div>
-                <button @click="submitComment" class="submit-button">提交评论</button>
+                <div class="form-footer">
+                  <div class="comment-tips">
+                    <i class="tip-icon">💡</i>
+                    <span>请文明发言，共建和谐社区</span>
+                  </div>
+                  <button @click="submitComment" class="submit-button">
+                    <span class="submit-icon">📮</span>
+                    <span>提交评论</span>
+                    <span class="button-effect"></span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -165,25 +217,32 @@
     </div>
     
     <!-- 回到顶部 -->
-    <button v-if="!loading && blog" class="back-to-top" @click="backToTop">
+    <button v-if="!loading && blog && showBackToTop" class="back-to-top" @click="backToTop">
       <span>↑</span>
     </button>
 
     <!-- 页脚 -->
-    <AppFooter />
+    <footer class="footer">
+      <div class="copyright">
+        © {{ new Date().getFullYear() }} Ryu
+      </div>
+      <div class="icp">
+        鄂ICP备2024072949号
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/store';
 import AppHeader from '@/components/AppHeader.vue';
-import AppFooter from '@/components/AppFooter.vue';
 import Live2DWidget from '@/components/Live2DWidget.vue';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
+import { getRecommendBlog } from '@/api/post';
 
 const route = useRoute();
 const router = useRouter();
@@ -234,6 +293,8 @@ const renderedContent = ref<string>('');
 const blogContentRef = ref<HTMLElement | null>(null);
 const prevPost = ref<PostPreview | null>(null);
 const nextPost = ref<PostPreview | null>(null);
+const catalogBottom = ref<number | null>(null);
+const mainContentBottom = ref<number | null>(null);
 
 const formattedDate = computed(() => {
   if (!blog.value || !blog.value.createTime) return '';
@@ -348,21 +409,45 @@ const fetchBlogDetail = async (id?: string): Promise<void> => {
 
     // 渲染Markdown内容
     renderedContent.value = renderContent(blog.value.content);
+    const res = await getRecommendBlog(blog.value.id, 2);
+   
+    if (res.code === 200 && res.data && Array.isArray(res.data)) {
+      const recommendBlog = res.data;
+      console.log('recommendBlog', recommendBlog[0]);
+      
+      if (recommendBlog.length > 0 && recommendBlog[0]) {
+        prevPost.value = {
+          id: recommendBlog[0].id,
+          title: recommendBlog[0].title,
+          coverImageUrl: recommendBlog[0].coverImageUrl,
+          createTime: new Date() // 添加默认日期，解决TypeScript错误
+        };
+      }
+      
+      if (recommendBlog.length > 1 && recommendBlog[1]) {
+        nextPost.value = {
+          id: recommendBlog[1].id,
+          title: recommendBlog[1].title,
+          coverImageUrl: recommendBlog[1].coverImageUrl,
+          createTime: new Date() // 添加默认日期，解决TypeScript错误
+        };
+      }
+    }
 
     // 获取前后文章
-    prevPost.value = {
-      id: '1',
-      title: 'Middleware',
-      coverImageUrl: 'https://picsum.photos/400/300?random=4',
-      createTime: new Date('2023-04-20')
-    };
+    // prevPost.value = {
+    //   id: '1',
+    //   title: 'Middleware',
+    //   coverImageUrl: 'https://picsum.photos/400/300?random=4',
+    //   createTime: new Date('2023-04-20')
+    // };
     
-    nextPost.value = {
-      id: '3',
-      title: 'Drools规则引擎-CSDN博客',
-      coverImageUrl: 'https://picsum.photos/400/300?random=5',
-      createTime: new Date('2023-05-15')
-    };
+    // nextPost.value = {
+    //   id: '3',
+    //   title: 'Drools规则引擎-CSDN博客',
+    //   coverImageUrl: 'https://picsum.photos/400/300?random=5',
+    //   createTime: new Date('2023-05-15')
+    // };
 
     // 检查内容是否过期
     // if (isContentExpired(mockData.updateTime)) {
@@ -503,8 +588,14 @@ const handleScroll = () => {
   const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   scrollProgress.value = (scrollTop / docHeight) * 100;
 
+  // 显示/隐藏回到顶部按钮
+  showBackToTop.value = scrollTop > 300;
+
   // 更新当前活动的目录项
   updateActiveHeading();
+
+  // 更新目录位置
+  updateCatalogPosition();
 };
 
 const updateActiveHeading = () => {
@@ -518,6 +609,33 @@ const updateActiveHeading = () => {
     if (element && element.offsetTop <= scrollPosition) {
       activeHeading.value = toc.value[i].id;
       break;
+    }
+  }
+};
+
+const updateCatalogPosition = () => {
+  const catalog = document.querySelector('.catalog') as HTMLElement;
+  const mainContent = document.querySelector('.main-content') as HTMLElement;
+  const commentsSection = document.querySelector('.comments-section') as HTMLElement;
+
+  if (catalog && mainContent && commentsSection) {
+    const catalogRect = catalog.getBoundingClientRect();
+    const mainContentRect = mainContent.getBoundingClientRect();
+    const commentsSectionRect = commentsSection.getBoundingClientRect();
+    
+    // 计算评论区顶部相对于视口的位置
+    const commentsSectionTop = commentsSectionRect.top;
+    const viewportHeight = window.innerHeight;
+    
+    // 如果评论区进入可视区域
+    if (commentsSectionTop < viewportHeight) {
+      // 计算目录应该缩短的距离
+      const overlap = viewportHeight - commentsSectionTop;
+      // 限制目录最大高度
+      catalog.style.maxHeight = `calc(100vh - 40px - ${overlap}px)`;
+    } else {
+      // 恢复默认最大高度
+      catalog.style.maxHeight = 'calc(100vh - 40px)';
     }
   }
 };
@@ -546,6 +664,10 @@ onMounted(() => {
   }
 
   window.addEventListener('scroll', handleScroll);
+  // 初始加载时也检查一次位置
+  nextTick(() => {
+    updateCatalogPosition();
+  });
 });
 
 onUnmounted(() => {
@@ -1311,17 +1433,50 @@ const goToPost = (post: PostPreview): void => {
 
     .related-post-card {
       width: calc(50% - 10px);
-      background-color: rgba(255, 255, 255, 0.05);
-      padding: 15px 20px;
-      border-radius: 5px;
+      height: 200px;
+      border-radius: 8px;
       transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
 
     .related-post-card:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .related-post-image {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .related-post-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .related-post-card:hover .related-post-image img {
+      transform: scale(1.1);
+    }
+
+    .related-post-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.8));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
     }
 
     .related-post-label {
@@ -1330,191 +1485,645 @@ const goToPost = (post: PostPreview): void => {
       color: #ffcc00;
       margin-bottom: 10px;
       letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
     .related-post-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 500;
-      line-height: 1.3;
-      color: #e0e0e0;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
     }
 
-    .prev-post {
-      text-align: left;
+    .prev-post .related-post-overlay, .next-post .related-post-overlay {
+      transition: background-color 0.3s ease;
     }
 
-    .next-post {
-      text-align: right;
+    .prev-post:hover .related-post-overlay, .next-post:hover .related-post-overlay {
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.9));
     }
-
+    
     // 评论区
     .comments-section {
       margin-top: 40px;
       padding: 20px 0;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeIn 0.8s ease;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(255, 204, 0, 0.5) 50%, transparent);
+      }
     }
 
     .comments-title {
-      font-size: 16px;
-  font-weight: 600;
-      margin-bottom: 20px;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 25px;
       color: #fff;
+      display: flex;
+      align-items: center;
+      font-family: 'Comic Sans MS', 'Ma Shan Zheng', cursive;
+      position: relative;
+      padding-bottom: 12px;
+      
+      .comments-icon {
+        margin-right: 10px;
+        font-size: 22px;
+        animation: bounce 2s infinite;
+      }
+      
+      .title-decoration {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 80%;
+        height: 12px;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10"><path fill="none" stroke="%23ffcc00" stroke-width="2" d="M0,5 C20,0 30,10 50,5 C70,0 80,10 100,5" /></svg>');
+        background-repeat: repeat-x;
+        background-size: auto 100%;
+        opacity: 0.4;
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, #ffcc00, transparent);
+        border-radius: 3px;
+      }
     }
 
     .comments-list {
-      margin-bottom: 30px;
+      margin-bottom: 40px;
+    }
+
+    .comment-fade-enter-active, .comment-fade-leave-active {
+      transition: all 0.5s ease;
+    }
+
+    .comment-fade-enter-from, .comment-fade-leave-to {
+      opacity: 0;
+      transform: translateY(30px);
     }
 
     .comment-item {
       display: flex;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
       padding-bottom: 25px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px dashed rgba(255, 204, 0, 0.2);
+      position: relative;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateX(5px);
+        
+        .comment-avatar .avatar-glow {
+          opacity: 0.8;
+        }
+      }
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 18px;
+        top: 40px;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, rgba(255, 204, 0, 0.5), transparent);
+        z-index: 0;
+      }
+      
+      &:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        
+        &::before {
+          display: none;
+        }
+      }
     }
 
     .comment-avatar {
-      width: 36px;
-      height: 36px;
-      margin-right: 12px;
+      width: 40px;
+      height: 40px;
+      margin-right: 15px;
       flex-shrink: 0;
-    }
-
-    .comment-avatar img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      
+      img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 204, 0, 0.5);
+        box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+        transition: all 0.3s ease;
+      }
+      
+      .avatar-glow {
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center, rgba(255, 204, 0, 0.3) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: -1;
+        animation: pulse 3s infinite;
+      }
     }
 
     .comment-content {
       flex: 1;
+      background-color: rgba(40, 40, 40, 0.4);
+      border-radius: 10px;
+      padding: 15px;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 15px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 8px solid rgba(40, 40, 40, 0.4);
+      }
     }
 
     .comment-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .comment-info {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .comment-name {
-  font-weight: 600;
-      margin-right: 10px;
-      color: #e0e0e0;
-      font-size: 13px;
+      font-weight: 600;
+      color: #ffcc00;
+      font-size: 14px;
+      position: relative;
+      z-index: 1;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(255, 204, 0, 0.3);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+        z-index: -1;
+      }
+      
+      &:hover::after {
+        transform: scaleX(1);
+      }
     }
 
     .comment-date {
-      font-size: 11px;
+      font-size: 12px;
       color: rgba(255, 255, 255, 0.5);
+      position: relative;
+      padding-left: 12px;
+      
+      &::before {
+        content: '•';
+        position: absolute;
+        left: 4px;
+        top: 0;
+        color: rgba(255, 255, 255, 0.4);
+      }
     }
 
     .comment-text {
-      margin-bottom: 12px;
-      line-height: 1.4;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 13px;
+      margin-bottom: 8px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      word-break: break-word;
+      position: relative;
+      padding: 10px 0;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      
+      &::first-letter {
+        font-size: 1.1em;
+        font-weight: 500;
+        color: #ffcc00;
+      }
+      
+      &::before {
+        content: '"';
+        position: absolute;
+        left: -5px;
+        top: -5px;
+        font-size: 20px;
+        color: rgba(255, 204, 0, 0.3);
+        font-family: 'Georgia', serif;
+      }
+      
+      &::after {
+        content: '"';
+        position: absolute;
+        right: -5px;
+        bottom: -10px;
+        font-size: 20px;
+        color: rgba(255, 204, 0, 0.3);
+        font-family: 'Georgia', serif;
+      }
     }
 
     .comment-actions {
       display: flex;
+      gap: 15px;
     }
 
     .like-button, .reply-button {
       background: none;
       border: none;
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 12px;
+      font-size: 13px;
       cursor: pointer;
-      margin-right: 15px;
       display: flex;
       align-items: center;
+      gap: 5px;
+      transition: all 0.3s ease;
+      padding: 5px 8px;
+      border-radius: 15px;
     }
 
-    .heart-icon {
-      margin-right: 5px;
-      font-size: 12px;
+    .like-button {
+      color: rgba(255, 255, 255, 0.7);
+      
+      &:hover {
+        color: #ff6b6b;
+        background-color: rgba(255, 107, 107, 0.1);
+      }
+      
+      &.liked {
+        color: #ff6b6b;
+        background-color: rgba(255, 107, 107, 0.1);
+        
+        .heart-icon {
+          animation: heartBeat 0.3s ease;
+        }
+        
+        .like-count {
+          animation: popIn 0.3s ease;
+        }
+      }
     }
 
-    .like-button:hover, .reply-button:hover {
-      color: rgba(255, 255, 255, 0.9);
+    .reply-button {
+      color: rgba(255, 255, 255, 0.7);
+      
+      &:hover {
+        color: #64b5f6;
+        background-color: rgba(100, 181, 246, 0.1);
+      }
     }
 
-    .like-button.liked {
-      color: #ff6b6b;
+    .heart-icon, .reply-icon {
+      font-size: 14px;
+      margin-right: 2px;
     }
 
     // 评论表单样式
     .comment-form {
-      background-color: rgba(255, 255, 255, 0.03);
-      padding: 20px;
-      border-radius: 5px;
+      background-color: rgba(30, 30, 30, 0.6);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 204, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #ffcc00, transparent);
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        right: -50px;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(255, 204, 0, 0.15), transparent 70%);
+        border-radius: 50%;
+        z-index: 0;
+      }
+      
+      .form-decorations {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+        
+        .decoration-star {
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ffcc00" d="M12,1L9,9H2L7,14L5,21L12,17L19,21L17,14L22,9H15Z" /></svg>');
+          background-size: contain;
+          opacity: 0.15;
+          
+          &.decoration-star-1 {
+            top: 20px;
+            right: 50px;
+            width: 15px;
+            height: 15px;
+            animation: floatStar 5s infinite ease-in-out;
+          }
+          
+          &.decoration-star-2 {
+            bottom: 80px;
+            right: 30px;
+            width: 20px;
+            height: 20px;
+            animation: floatStar 7s infinite ease-in-out 1s;
+          }
+          
+          &.decoration-star-3 {
+            bottom: 30px;
+            left: 40px;
+            width: 12px;
+            height: 12px;
+            animation: floatStar 4s infinite ease-in-out 2s;
+          }
+        }
+      }
+    }
+
+    @keyframes floatStar {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(10deg); }
     }
 
     .form-title {
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       color: #fff;
+      display: flex;
+      align-items: center;
+      font-family: 'Comic Sans MS', 'Ma Shan Zheng', cursive;
+      
+      .form-icon {
+        margin-right: 10px;
+        font-size: 20px;
+        animation: wiggle 3s ease-in-out infinite;
+      }
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      85% { transform: rotate(0deg); }
+      90% { transform: rotate(10deg); }
+      95% { transform: rotate(-10deg); }
     }
 
     .form-row {
       display: flex;
       gap: 20px;
       margin-bottom: 20px;
+      
+      @media (max-width: 600px) {
+        flex-direction: column;
+        gap: 15px;
+      }
     }
 
     .form-group {
       flex: 1;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      
+      label {
+        display: block;
+        margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+      
+      .input-wrapper, .textarea-wrapper {
+        position: relative;
+        
+        .input-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 16px;
+          color: rgba(255, 204, 0, 0.7);
+          transition: all 0.3s ease;
+          pointer-events: none;
+        }
+      }
+      
+      input, textarea {
+        width: 100%;
+        padding: 12px 15px 12px 40px;
+        background-color: rgba(30, 30, 30, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        
+        &:focus {
+          outline: none;
+          border-color: rgba(255, 204, 0, 0.5);
+          box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.15);
+          
+          & + .input-icon {
+            color: #ffcc00;
+            transform: translateY(-50%) scale(1.1);
+          }
+        }
+        
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.3);
+        }
+      }
+      
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        line-height: 1.6;
+        padding: 15px;
+        background-color: rgba(30, 30, 30, 0.7);
+        z-index: 1;
+        position: relative;
+      }
+      
+      .textarea-wrapper {
+        position: relative;
+        
+        .textarea-decoration {
+          position: absolute;
+          right: 10px;
+          bottom: 10px;
+          z-index: 0;
+          pointer-events: none;
+          opacity: 0.3;
+          transition: opacity 0.3s ease;
+          
+          .anime-decoration {
+            width: 70px;
+            height: 70px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23ffcc00" d="M50 0 C60 30 80 50 100 50 L50 100 C30 70 20 50 0 50 Z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            transform: rotate(-15deg);
+          }
+        }
+        
+        &:hover .textarea-decoration {
+          opacity: 0.5;
+        }
+      }
+      
+      &:focus-within {
+        label {
+          color: #ffcc00;
+        }
+      }
     }
 
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 13px;
+    .form-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      gap: 15px;
+      
+      @media (max-width: 600px) {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .comment-tips {
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 13px;
+        
+        .tip-icon {
+          margin-right: 6px;
+          font-size: 15px;
+          animation: pulse 2s infinite;
+        }
+      }
     }
 
     .required {
       color: #ff6b6b;
-    }
-
-    .form-group input, .form-group textarea {
-      width: 100%;
-      padding: 8px;
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      color: #ffffff;
-      font-size: 13px;
-      transition: all 0.3s ease;
-    }
-
-    .form-group textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .form-group input:focus, .form-group textarea:focus {
-      outline: none;
-      border-color: rgba(255, 255, 255, 0.3);
-      background-color: rgba(255, 255, 255, 0.08);
+      margin-left: 2px;
     }
 
     .submit-button {
-      display: inline-block;
-      padding: 6px 16px;
-      background-color: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      font-size: 13px;
+      background: linear-gradient(45deg, #ffcc00, #ff9500);
+      color: #1c1c1c;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      
+      .submit-icon {
+        font-size: 18px;
+        transform: translateY(1px);
+      }
+      
+      .button-effect {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, transparent 20%, rgba(255, 255, 255, 0.2), transparent 80%);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: -1;
+      }
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4);
+        background: linear-gradient(45deg, #ffda44, #ffae00);
+        
+        .button-effect {
+          transform: translateX(100%);
+        }
+        
+        .submit-icon {
+          animation: iconWiggle 0.5s ease;
+        }
+      }
+      
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 5px rgba(255, 204, 0, 0.3);
+      }
     }
 
-    .submit-button:hover {
-      background-color: rgba(255, 255, 255, 0.15);
+    @keyframes iconWiggle {
+      0%, 100% { transform: translateY(1px) rotate(0deg); }
+      25% { transform: translateY(1px) rotate(-10deg); }
+      75% { transform: translateY(1px) rotate(10deg); }
     }
   }
 }
@@ -1530,18 +2139,23 @@ const goToPost = (post: PostPreview): void => {
     box-shadow: none;
     position: sticky;
     top: 20px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    transition: max-height 0.3s ease;
   }
 
   .catalog-title, .categories-title {
     font-size: 20px;
     font-weight: 600;
-  color: white;
+    color: white;
     padding: 12px 0;
     background-color: transparent;
     margin: 0 0 16px 0;
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
     border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
 
     .category-icon {
       display: inline-flex;
@@ -1569,8 +2183,8 @@ const goToPost = (post: PostPreview): void => {
     list-style: none;
     padding: 0 0 0 4px;
     margin: 0;
-    max-height: 600px; // 增加目录最大高度
     overflow-y: auto;
+    flex: 1;
 
     &::-webkit-scrollbar {
       width: 4px;
@@ -1672,12 +2286,12 @@ const goToPost = (post: PostPreview): void => {
 }
 
 // 回到顶部
-  .back-to-top {
+.back-to-top {
   position: fixed;
   right: 30px;
   bottom: 30px;
-    width: 40px;
-    height: 40px;
+  width: 40px;
+  height: 40px;
   background-color: rgba(255, 204, 0, 0.8);
   color: #1c1c1c;
   border: none;
@@ -1736,12 +2350,109 @@ const goToPost = (post: PostPreview): void => {
   }
 }
 
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-2px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 // 页脚样式
-:deep(.app-footer) {
+.footer {
+  padding: 30px 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  margin-top: 60px;
   background-color: #1c1c1c;
-  margin-top: 50px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.3), transparent);
+    animation: footerGlow 4s infinite;
+  }
+
+  .copyright {
+    margin-bottom: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: #aaa;
+    transition: color 0.3s ease;
+    
+    &:hover {
+      color: #ffcc00;
+    }
+  }
+
+  .icp {
+    font-size: 12px;
+    color: #777;
+    transition: color 0.3s ease;
+    
+    &:hover {
+      color: #999;
+    }
+  }
+
+  a {
+    color: #ffcc00;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #ffd633;
+    }
+    
+    &:after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      transform: scaleX(0);
+      height: 1px;
+      bottom: -2px;
+      left: 0;
+      background-color: #ffcc00;
+      transform-origin: bottom right;
+      transition: transform 0.3s ease-out;
+    }
+
+    &:hover:after {
+      transform: scaleX(1);
+      transform-origin: bottom left;
+    }
+  }
+}
+
+@keyframes footerGlow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 </style>
-
-

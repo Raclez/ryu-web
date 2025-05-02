@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  ryu-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ryu-web
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    # 如果有环境变量文件
+    env_file:
+      - .env.production
+    # 如果需要与后端API服务通信
+    # networks:
+    #   - app-network
+
+# networks:
+#   app-network:
+#     driver: bridge 

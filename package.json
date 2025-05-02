@@ -46,7 +46,9 @@
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-container": "^4.0.0",
+    "markdown-it-emoji": "^3.0.0",
     "markdown-it-prism": "^3.0.0",
+    "markdown-it-task-lists": "^2.1.1",
     "md-editor-v3": "^5.4.5",
     "shiki": "^3.2.2"
   }
