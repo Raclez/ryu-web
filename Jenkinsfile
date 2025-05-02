@@ -17,6 +17,7 @@ pipeline {
     environment {
         // 定义环境变量
         DOCKER_REGISTRY = 'registry.cn-hangzhou.aliyuncs.com'  // 替换为你的Docker镜像仓库地址
+        DOCKER_NAMESPACE= 'ryu-blog'
         APP_NAME = 'ryu-web'
         DEPLOY_ENV = "${params.ENV}"
         IMAGE_NAME = "${DOCKER_REGISTRY}/${APP_NAME}"
@@ -129,9 +130,15 @@ pipeline {
                                           """
                     }
 
-                    // 推送Docker镜像
-                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
-                    sh "docker push ${IMAGE_NAME}:${DEPLOY_ENV}-latest"
+               // 推送Docker镜像
+               def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
+               def fullImageLatest = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${IMAGE_NAME}:${DEPLOY_ENV}-latest"
+
+               // 推送指定标签的镜像
+               sh "docker push ${fullImageName}"
+
+               // 推送最新标签的镜像
+               sh "docker push ${fullImageLatest}"
                 }
             }
         }
