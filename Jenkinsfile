@@ -20,7 +20,7 @@ pipeline {
         DOCKER_NAMESPACE= 'ryu-blog'
         APP_NAME = 'ryu-web'
         DEPLOY_ENV = "${params.ENV}"
-        IMAGE_NAME = "${DOCKER_REGISTRY}/${APP_NAME}"
+        IMAGE_NAME = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${APP_NAME}"
         IMAGE_TAG = "${DEPLOY_ENV}-${env.BUILD_NUMBER}"
 
         // 根据环境参数设置部署配置
@@ -130,15 +130,12 @@ pipeline {
                                           """
                     }
 
-               // 推送Docker镜像
-               def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
-               def fullImageLatest = "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${IMAGE_NAME}:${DEPLOY_ENV}-latest"
+                    // 推送Docker镜像
+                    // 推送指定标签的镜像
+                    sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
 
-               // 推送指定标签的镜像
-               sh "docker push ${fullImageName}"
-
-               // 推送最新标签的镜像
-               sh "docker push ${fullImageLatest}"
+                    // 推送最新标签的镜像
+                    sh "docker push ${IMAGE_NAME}:${DEPLOY_ENV}-latest"
                 }
             }
         }

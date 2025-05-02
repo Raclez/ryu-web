@@ -4,6 +4,11 @@ version: '3.8'
 # 使用方法：ENV=test docker-compose up -d
 # 默认为production环境
 
+# 设置默认值
+x-registry: &registry ${DOCKER_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}
+x-namespace: &namespace ${DOCKER_NAMESPACE:-ryu-blog}
+x-app-name: &app_name ${APP_NAME:-ryu-web}
+
 services:
   ryu-web:
     build:
@@ -11,6 +16,7 @@ services:
       dockerfile: Dockerfile
       args:
         - BUILD_ENV=${ENV:-production}
+    image: *registry/*namespace/*app_name:${ENV:-production}
     container_name: ryu-web-${ENV:-production}
     ports:
       - "${PORT:-80}:80"
