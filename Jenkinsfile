@@ -31,21 +31,17 @@ pipeline {
         DEPLOY_SERVER = '119.91.136.254'
         DEPLOY_BASE_PATH = "/opt/ryu-blog"
         
-        // 环境特定配置
-        PORT_MAPPING = [
-            'development': '3001:80', 
-            'test': '3002:80', 
-            'staging': '3003:80', 
-            'production': '80:80'
-        ]
+        // 环境特定配置 - 端口映射
+        PORT_MAPPING_DEV = '3001:80'
+        PORT_MAPPING_TEST = '3002:80'
+        PORT_MAPPING_STAGING = '3003:80'
+        PORT_MAPPING_PROD = '80:80'
         
         // API基础URL配置
-        API_BASE_URL = [
-            'development': 'http://localhost:7200/', 
-            'test': 'http://test-api.ryu-blog.com/api', 
-            'staging': 'http://staging-api.ryu-blog.com/api', 
-            'production': 'https://api.ryu-blog.com/api'
-        ]
+        API_BASE_URL_DEV = 'http://localhost:7200/'
+        API_BASE_URL_TEST = 'http://test-api.ryu-blog.com/api'
+        API_BASE_URL_STAGING = 'http://staging-api.ryu-blog.com/api'
+        API_BASE_URL_PROD = 'https://api.ryu-blog.com/api'
     }
 
     options {
@@ -60,10 +56,19 @@ pipeline {
             steps {
                 script {
                     // 设置当前环境的端口映射
-                    env.CURRENT_PORT_MAPPING = PORT_MAPPING[params.TARGET_ENV]
-                    
-                    // 设置当前环境的API基础URL
-                    env.CURRENT_API_BASE_URL = API_BASE_URL[params.TARGET_ENV]
+                    if (params.TARGET_ENV == 'development') {
+                        env.CURRENT_PORT_MAPPING = env.PORT_MAPPING_DEV
+                        env.CURRENT_API_BASE_URL = env.API_BASE_URL_DEV
+                    } else if (params.TARGET_ENV == 'test') {
+                        env.CURRENT_PORT_MAPPING = env.PORT_MAPPING_TEST
+                        env.CURRENT_API_BASE_URL = env.API_BASE_URL_TEST
+                    } else if (params.TARGET_ENV == 'staging') {
+                        env.CURRENT_PORT_MAPPING = env.PORT_MAPPING_STAGING
+                        env.CURRENT_API_BASE_URL = env.API_BASE_URL_STAGING
+                    } else if (params.TARGET_ENV == 'production') {
+                        env.CURRENT_PORT_MAPPING = env.PORT_MAPPING_PROD
+                        env.CURRENT_API_BASE_URL = env.API_BASE_URL_PROD
+                    }
                     
                     echo "开始构建 ${PROJECT_NAME}"
                     echo "目标环境: ${params.TARGET_ENV}"
