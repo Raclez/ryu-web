@@ -21,7 +21,7 @@ pipeline {
         DEPLOY_ENV = "${params.ENV}"
         IMAGE_NAME = "${DOCKER_REGISTRY}/${APP_NAME}"
         IMAGE_TAG = "${DEPLOY_ENV}-${env.BUILD_NUMBER}"
-        
+
         // 根据环境参数设置部署配置
         DEPLOY_CONFIG = """
             development=3001:80,开发服务器IP地址
@@ -46,7 +46,7 @@ pipeline {
                             break
                         }
                     }
-                    
+
                     echo "当前部署环境: ${DEPLOY_ENV}"
                     echo "目标服务器: ${SERVER_IP}"
                     echo "端口映射: ${PORT_MAPPING}"
@@ -111,7 +111,7 @@ pipeline {
                             exit 1
                         fi
                     """
-                    
+
                     // 构建Docker镜像，传递环境参数，添加--no-cache选项避免缓存问题
                     sh "docker build --no-cache --build-arg BUILD_ENV=${DEPLOY_ENV} -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:${DEPLOY_ENV}-latest ."
                 }
@@ -124,7 +124,9 @@ pipeline {
                 script {
                     // 登录到Docker镜像仓库
                     withCredentials([usernamePassword(credentialsId: '7bbd2f0b-5af4-4079-a15c-bc52037de966', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY -u $DOCKER_USERNAME --password-stdin"
+                          sh """
+                                echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u ${DOCKER_USERNAME} --password-stdin
+                                          """
                     }
 
                     // 推送Docker镜像
@@ -139,10 +141,10 @@ pipeline {
                 script {
                     // 选择使用哪个标签的镜像
                     def deployTag = params.SKIP_BUILD ? "${DEPLOY_ENV}-latest" : "${IMAGE_TAG}"
-                    
+
                     // 根据环境设置容器名称
                     def containerName = "${APP_NAME}-${DEPLOY_ENV}"
-                    
+
                     // 远程部署
                     withCredentials([sshUserPrivateKey(credentialsId: '37ab906a-5428-404f-ad67-765dd2a7a8ad', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         def remoteCommand = """
