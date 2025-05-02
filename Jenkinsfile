@@ -1,11 +1,6 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:20-alpine'
-            args '-v /var/jenkins_home/workspace:/var/jenkins_home/workspace'
-        }
-    }
-    
+ agent any
+
     environment {
         // 定义环境变量
         DOCKER_REGISTRY = 'registry.cn-hangzhou.aliyuncs.com'  // 替换为你的Docker镜像仓库地址
@@ -13,33 +8,33 @@ pipeline {
         IMAGE_NAME = "${DOCKER_REGISTRY}/${APP_NAME}"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        
+
         stage('Install Dependencies') {
             steps {
                 sh 'npm install -g pnpm'
                 sh 'pnpm install'
             }
         }
-        
+
         stage('Type Check') {
             steps {
                 sh 'pnpm run type-check'
             }
         }
-        
+
         stage('Build') {
             steps {
                 sh 'pnpm run build'
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -48,7 +43,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Push Docker Image') {
             steps {
                 script {
@@ -56,14 +51,14 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: '7bbd2f0b-5af4-4079-a15c-bc52037de966', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY -u $DOCKER_USERNAME --password-stdin"
                     }
-                    
+
                     // 推送Docker镜像
                     sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
                     sh "docker push ${IMAGE_NAME}:latest"
                 }
             }
         }
-        
+
         stage('Deploy') {
             steps {
                 script {
@@ -75,7 +70,7 @@ pipeline {
                             docker rm ${APP_NAME} || true
                             docker run -d --name ${APP_NAME} -p 80:80 ${IMAGE_NAME}:${IMAGE_TAG}
                         """
-                        
+
                         // 使用SSH执行远程命令
                         sh """
                             ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@your-server-ip '${remoteCommand}'
@@ -85,7 +80,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         always {
             // 清理工作空间
@@ -98,4 +93,4 @@ pipeline {
             echo '部署失败！'
         }
     }
-} 
+}
