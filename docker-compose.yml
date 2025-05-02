@@ -1,21 +1,36 @@
 version: '3.8'
 
+# 通过环境变量指定要部署的环境
+# 使用方法：ENV=test docker-compose up -d
+# 默认为production环境
+
 services:
   ryu-web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ryu-web
+      args:
+        - BUILD_ENV=${ENV:-production}
+    container_name: ryu-web-${ENV:-production}
     ports:
-      - "80:80"
+      - "${PORT:-80}:80"
     restart: unless-stopped
-    # 如果有环境变量文件
     env_file:
-      - .env.production
-    # 如果需要与后端API服务通信
-    # networks:
-    #   - app-network
+      - .env.${ENV:-production}
+    environment:
+      - APP_ENV=${ENV:-production}
+    volumes:
+      # 挂载nginx日志目录
+      - ./logs:/var/log/nginx
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
-# networks:
-#   app-network:
-#     driver: bridge 
+networks:
+  app-network:
+    driver: bridge 

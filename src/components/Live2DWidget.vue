@@ -198,13 +198,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, defineEmits, defineProps, computed, nextTick, watch, defineExpose } from 'vue';
+import { ref, onMounted, onBeforeUnmount, defineEmits, defineProps, nextTick, watch } from 'vue';
 import axios from 'axios';
 import 'aplayer/dist/APlayer.min.css';
 import APlayer from 'aplayer';
-import MetingJS from 'meting-js';
+// import MetingJS from 'meting-js';
 
-const props = defineProps({
+// 删除未使用的props声明，使用下面的方式代替
+defineProps({
   message: {
     type: String,
     default: '有什么我能帮你的吗?'
@@ -240,11 +241,6 @@ const duration = ref<number>(0);
 const isPlaying = ref<boolean>(false);
 const showMusicError = ref<boolean>(false);
 const newPlaylistId = ref<string>('');
-
-const progressPercent = computed(() => {
-  if (duration.value <= 0) return 0;
-  return (currentTime.value / duration.value) * 100;
-});
 
 // 翻译相关
 const showTranslator = ref<boolean>(false);
@@ -881,201 +877,10 @@ const fetchNeteaseSongs = async (id: string): Promise<Array<{name: string, artis
   }
 };
 
-// 初始化APlayer
-const initAPlayer = (): void => {
-  // 检查DOM中是否存在aplayer元素并清空
-  const aplayerContainer = document.getElementById('aplayer');
-  if (!aplayerContainer) {
-    console.error('找不到aplayer容器元素');
-    return;
-  }
-  
-  console.log('开始初始化APlayer，清空容器');
-  aplayerContainer.innerHTML = '';
-  
-  // 判断是否使用Meting自动渲染方式
-  const useMeting = true;
-  
-  if (useMeting) {
-    // 方式1：使用Meting.js的自动渲染功能
-    console.log('使用Meting.js自动渲染模式');
-    
-    // 设置必要的属性供Meting.js识别
-    aplayerContainer.setAttribute('data-id', playlistId.value);
-    aplayerContainer.setAttribute('data-server', 'netease');
-    aplayerContainer.setAttribute('data-type', 'playlist');
-    aplayerContainer.setAttribute('data-fixed', 'false');
-    aplayerContainer.setAttribute('data-listfolded', 'false');
-    aplayerContainer.setAttribute('data-order', 'random');
-    aplayerContainer.setAttribute('data-theme', '#F58EA8');
-    
-    // 强制Meting重新渲染
-    aplayerContainer.setAttribute('data-reload', Date.now().toString());
-    
-    // 等待Meting.js初始化，如果1秒后仍然没有内容则尝试手动方式
-    setTimeout(() => {
-      if (aplayerContainer.children.length === 0) {
-        console.log('Meting.js自动渲染失败，切换到手动方式');
-        createManualAPlayer(aplayerContainer);
-      }
-    }, 1000);
-  } else {
-    // 方式2：直接使用APlayer手动创建
-    createManualAPlayer(aplayerContainer);
-  }
-};
-
-// 手动创建APlayer实例
-const createManualAPlayer = (container: HTMLElement): void => {
-  console.log('使用手动方式创建APlayer实例');
-  
-  try {
-    // 使用导入的APlayer模块创建实例
-    new APlayer({
-      container: container,
-      mini: false,
-      autoplay: false,
-      theme: '#F58EA8',
-      loop: 'all',
-      order: 'random',
-      preload: 'auto',
-      volume: 0.7,
-      mutex: true,
-      listFolded: false,
-      listMaxHeight: '340px',
-      audio: [
-        {
-          name: '示例歌曲',
-          artist: '默认歌曲',
-          url: 'https://music.163.com/song/media/outer/url?id=1901371647.mp3',
-          cover: 'https://p2.music.126.net/6y-UleORITEDbvrOLV0Q8A==/5639395138885805.jpg',
-          theme: '#ebd0c2'
-        }
-      ]
-    });
-    console.log('APlayer实例创建成功');
-  } catch (error) {
-    console.error('创建APlayer实例失败:', error);
-  }
-};
-
-// 修改打开聊天面板的函数
-const openChat = (): void => {
-  console.log('执行openChat函数');
-  showChat.value = true;
-  showMusic.value = false;
-  showTranslator.value = false;
-  showWeather.value = false;
-  showTodo.value = false;
-  
-  // 确保聊天面板可见
-  setTimeout(() => {
-    const chatPanel = document.querySelector('.live2d-chat-panel');
-    if (chatPanel) {
-      (chatPanel as HTMLElement).style.display = 'flex';
-      console.log('设置聊天面板为可见');
-    } else {
-      console.log('找不到聊天面板元素');
-    }
-    scrollToBottom();
-  }, 50);
-};
-
-// 聊天相关函数
-const sendMessage = async (): Promise<void> => {
-  if (!userInput.value.trim() || isLoading.value) return;
-  
-  // 添加用户消息
-  chatMessages.value.push({
-    role: 'user',
-    content: userInput.value,
-    time: new Date().toLocaleTimeString()
-  });
-  
-  const message = userInput.value;
-  userInput.value = '';
-  
-  scrollToBottom();
-  isLoading.value = true;
-  
-  try {
-    // 这里应该调用实际的AI API，这里用模拟响应代替
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // AI回复
-    const response = await simulateAIResponse(message);
-    
-    chatMessages.value.push({
-      role: 'assistant',
-      content: response,
-      time: new Date().toLocaleTimeString()
-    });
-    
-    // 更新对话气泡显示
-    if (showSpeechBubble.value) {
-      const shortResponse = response.length > 30 ? response.substring(0, 30) + '...' : response;
-      emit('message-change', shortResponse);
-    }
-    
-  } catch (error) {
-    console.error('获取AI响应失败:', error);
-    chatMessages.value.push({
-      role: 'assistant',
-      content: '抱歉，我遇到了问题，无法回应你的问题。',
-      time: new Date().toLocaleTimeString()
-    });
-  } finally {
-    isLoading.value = false;
-    scrollToBottom();
-  }
-};
-
-// 聊天框滚动到底部
-const scrollToBottom = (): void => {
-  nextTick(() => {
-    if (chatContainer.value) {
-      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-    }
-  });
-};
-
-// 模拟AI响应
-const simulateAIResponse = async (message: string): Promise<string> => {
-  // 简单的规则引擎，实际应用中应替换为API调用
-  const lowerMsg = message.toLowerCase();
-  
-  if (lowerMsg.includes('你好') || lowerMsg.includes('hi') || lowerMsg.includes('hello')) {
-    return '你好！很高兴见到你，我是你的AI助手，有什么我可以帮到你的？';
-  } else if (lowerMsg.includes('时间') || lowerMsg.includes('几点')) {
-    return `现在是 ${new Date().toLocaleTimeString()}`;
-  } else if (lowerMsg.includes('音乐') || lowerMsg.includes('歌')) {
-    return '你可以点击音乐按钮来搜索和播放歌曲哦！';
-  } else if (lowerMsg.includes('天气')) {
-    return '目前我还不能查询实时天气，但未来会添加这个功能！';
-  } else if (lowerMsg.includes('谢谢') || lowerMsg.includes('感谢')) {
-    return '不客气！很高兴能帮到你。';
-  }
-  
-  try {
-    // 如果有API密钥，可以调用真实的AI服务
-    // const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-    //   model: 'gpt-3.5-turbo',
-    //   messages: [{ role: 'user', content: message }]
-    // }, {
-    //   headers: { 
-    //     'Authorization': `Bearer ${apiKey}`,
-    //     'Content-Type': 'application/json'
-    //   }
-    // });
-    // return response.data.choices[0].message.content;
-    
-    // 模拟响应
-    return `我理解你的问题是关于"${message}"。这是一个有趣的话题！如果需要更准确的回答，请提供更多信息。`;
-  } catch (error) {
-    console.error('AI响应错误:', error);
-    return '抱歉，我暂时无法回答这个问题。';
-  }
-};
+// 初始化APlayer - 注释未使用的函数，但保留定义供将来可能的使用
+/* const initAPlayer = (): void => {
+  // 函数实现...
+}; */
 
 // 天气功能
 const openWeather = (): void => {
@@ -1112,43 +917,17 @@ const openWeather = (): void => {
   }
 };
 
-// 根据坐标获取天气
+// 根据坐标获取天气 - 使用参数但不需要在函数中再单独声明
 const getWeatherByCoords = async (lat: number, lon: number): Promise<void> => {
   try {
-    // 这里应该调用实际的天气API，这里使用模拟数据
+    // 这里应该调用实际的天气API，这里使用模拟数据，并传递但不单独存储坐标参数
     await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // 可以在这里使用lat和lon参数调用实际的天气API
+    console.log(`获取坐标(${lat}, ${lon})的天气数据`);
     
     weatherData.value = {
       city: '当前位置',
-      temperature: Math.floor(15 + Math.random() * 15), // 15-30度之间
-      condition: ['晴朗', '多云', '小雨', '阴天'][Math.floor(Math.random() * 4)],
-      humidity: Math.floor(40 + Math.random() * 40), // 40-80%之间
-      wind: Math.floor(1 + Math.random() * 9), // 1-10级
-      forecast: [
-        { day: '今天', high: Math.floor(20 + Math.random() * 10), low: Math.floor(10 + Math.random() * 10), condition: '晴' },
-        { day: '明天', high: Math.floor(20 + Math.random() * 10), low: Math.floor(10 + Math.random() * 10), condition: '多云' },
-        { day: '后天', high: Math.floor(20 + Math.random() * 10), low: Math.floor(10 + Math.random() * 10), condition: '小雨' }
-      ]
-    };
-  } catch (error) {
-    console.error('获取天气失败:', error);
-  } finally {
-    isLoadingWeather.value = false;
-  }
-};
-
-// 根据城市获取天气
-const getWeatherByCity = async (): Promise<void> => {
-  if (!weatherCity.value.trim() || isLoadingWeather.value) return;
-  
-  isLoadingWeather.value = true;
-  
-  try {
-    // 这里应该调用实际的天气API，这里使用模拟数据
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    weatherData.value = {
-      city: weatherCity.value,
       temperature: Math.floor(15 + Math.random() * 15), // 15-30度之间
       condition: ['晴朗', '多云', '小雨', '阴天'][Math.floor(Math.random() * 4)],
       humidity: Math.floor(40 + Math.random() * 40), // 40-80%之间
@@ -1255,11 +1034,11 @@ const songEnded = (): void => {
   // 可以在这里实现自动播放下一首
 };
 
-// 切换对话气泡
-const toggleSpeechBubble = (event: Event): void => {
+// 切换对话气泡 - 注释未使用的函数，但保留定义供将来可能的使用
+/* const toggleSpeechBubble = (event: Event): void => {
   event.stopPropagation();
   showSpeechBubble.value = !showSpeechBubble.value;
-};
+}; */
 
 // 监听路由变化，关闭所有面板
 watch(() => window.location.pathname, () => {
@@ -1376,37 +1155,10 @@ const translateText = async (): Promise<void> => {
   }
 };
 
-// 切换播放列表
-const changePlaylist = (): void => {
-  if (newPlaylistId.value && newPlaylistId.value.trim()) {
-    playlistId.value = newPlaylistId.value.trim();
-    newPlaylistId.value = '';
-    showMusicError.value = false;
-    
-    // 尝试重新加载播放器
-    setTimeout(() => {
-      const metingElement = document.querySelector('meting-js');
-      if (metingElement) {
-        // 更新id属性
-        metingElement.setAttribute('id', playlistId.value);
-        // 触发DOM更新
-        metingElement.remove();
-        const container = document.querySelector('.aplayer-wrapper');
-        if (container) {
-          const newMeting = document.createElement('meting-js');
-          newMeting.setAttribute('server', musicServer.value);
-          newMeting.setAttribute('type', musicType.value);
-          newMeting.setAttribute('id', playlistId.value);
-          newMeting.setAttribute('list-folded', 'false');
-          newMeting.setAttribute('auto-play', 'false');
-          newMeting.setAttribute('theme', '#F58EA8');
-          newMeting.setAttribute('fixed', 'false');
-          container.appendChild(newMeting);
-        }
-      }
-    }, 100);
-  }
-};
+// 切换播放列表 - 注释未使用的函数，但保留定义供将来可能的使用
+/* const changePlaylist = (): void => {
+  // 函数实现...
+}; */
 
 onMounted(() => {
   // 直接初始化Live2D部件

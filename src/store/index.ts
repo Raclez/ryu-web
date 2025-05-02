@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
-import {BaseBlog, BlogDetail} from "@/api/types.ts";
+import {BaseBlog, BlogDetail, Category} from "@/api/types.ts";
 import {ref} from "vue";
-import {getBlogByCursor , BlogPaginationParams, getBlogDetail} from "@/api/post.ts";
+import {getBlogByCursor, BlogPaginationParams, getBlogDetail, getCategories} from "@/api/post.ts";
+import { getBlogsByCategory as apiBlogsByCategory } from "@/api/post.ts";
 import { DateUtils } from '@/utils/dateUtils';
 
 export const useBlogStore = defineStore('blog', () => {
@@ -14,6 +15,8 @@ export const useBlogStore = defineStore('blog', () => {
     const cursor = ref('')
     const lastCreateTime = ref<string>('')
     const loadingMore = ref(false)
+    const categories = ref<Category[]>([])
+    const categoryLoading = ref(false)
 
     // Actions
     const fetchAllBlogs = async () => {
@@ -142,14 +145,60 @@ export const useBlogStore = defineStore('blog', () => {
         }
     }
 
+    // 获取所有分类
+    const fetchCategories = async () => {
+        try {
+            categoryLoading.value = true
+            const res = await getCategories()
+            
+            if (res.code === 200) {
+                categories.value = res.data || []
+                return res.data
+            } else {
+                error.value = res.message || '获取分类列表失败'
+                return []
+            }
+        } catch (err) {
+            error.value = err instanceof Error ? err.message : '获取分类列表失败'
+            return []
+        } finally {
+            categoryLoading.value = false
+        }
+    }
+
+    // 根据分类获取博客
+    const getBlogsByCategory = async (categoryName: string): Promise<BaseBlog[]> => {
+        try {
+            loading.value = true
+            const res = await apiBlogsByCategory(categoryName)
+            
+            if (res.code === 200) {
+                blogs.value = res.data || []
+                return res.data
+            } else {
+                error.value = res.message || '获取分类博客列表失败'
+                return []
+            }
+        } catch (err) {
+            error.value = err instanceof Error ? err.message : '获取分类博客列表失败'
+            return []
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         blogs,
         loading,
         error,
         currentBlog,
+        categories,
+        categoryLoading,
         fetchAllBlogs,
         fetchBlogById,
         loadMoreBlogs,
+        fetchCategories,
+        getBlogsByCategory,
         hasMore,
         loadingMore
     }

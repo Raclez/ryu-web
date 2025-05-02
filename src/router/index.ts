@@ -40,7 +40,7 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(to, _from, savedPosition) {
     // 如果有保存的位置，滚动到保存的位置
     if (savedPosition) {
       return savedPosition;
@@ -57,9 +57,9 @@ const router = createRouter({
 });
 
 // 全局前置守卫 - 设置页面标题
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
 
-  console.log('[路由跳转]', from.path, '→', to.path)
+  console.log('[路由跳转]', _from.path, '→', to.path)
   // 设置标题
   document.title = `${to.meta.title || 'Blog'} - Ryu's Blog`;
 

@@ -58,16 +58,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useRouter } from 'vue-router';
 
-const props = defineProps({
+defineProps({
   categories: {
     type: Array as () => { id: string, name: string }[],
     default: () => []
   }
 });
 
-const router = useRouter();
 const isNavVisible = ref<boolean>(false);
 const showSearchInput = ref<boolean>(false);
 const searchQuery = ref<string>('');

@@ -71,15 +71,15 @@
             @click="navigateToBlog(blog.id)"
           >
             <div class="blog-thumbnail">
-              <img :src="blog.image" :alt="blog.title" />
+              <img :src="blog.coverImageUrl" :alt="blog.title" />
             </div>
             <div class="blog-info">
               <h2 class="blog-title">{{ blog.title }}</h2>
-              <p class="blog-desc">{{ truncateContent(blog.content) }}</p>
+              <p class="blog-desc">{{ truncateContent(blog.excerpt) }}</p>
               <div class="blog-meta">
                 <span class="blog-date">{{ formatDate(blog.createTime) }}</span>
-                <span class="blog-category">{{ blog.category }}</span>
-                <span class="blog-views">{{ randomViews() }}</span>
+                <span class="blog-category">{{ blog.categoryName }}</span>
+                <span class="blog-views">{{ blog.views || randomViews() }}</span>
               </div>
             </div>
           </div>
@@ -102,10 +102,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/store';
-import type { Blog, Category } from '@/api';
+import type { Category } from '@/api/types';
+import type { BaseBlog } from '@/api/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -134,16 +135,22 @@ const hideNav = (): void => {
 
 // 获取当前分类信息
 const currentCategory = computed<Category | undefined>(() => {
-  return categories.value.find(cat => cat.name === category.value);
+  return blogStore.categories.find(cat => cat.name === category.value);
 });
 
 // 获取所有分类
 const categories = computed<Category[]>(() => blogStore.categories);
 
 // 获取当前分类下的博客
-const blogs = computed<Blog[]>(() => {
-  return blogStore.getBlogsByCategory(category.value);
-});
+const blogs = ref<BaseBlog[]>([]);
+
+// 获取分类下的博客
+const fetchCategoryBlogs = async (): Promise<void> => {
+  if (category.value) {
+    const result = await blogStore.getBlogsByCategory(category.value);
+    blogs.value = result || [];
+  }
+};
 
 // 导航到博客详情页
 const navigateToBlog = (blogId: string): void => {
@@ -215,6 +222,9 @@ const loadData = async (): Promise<void> => {
       blogStore.fetchCategories()
     ]);
     
+    // 加载分类下的博客
+    await fetchCategoryBlogs();
+    
     // 检查分类是否存在
     if (category.value && !currentCategory.value) {
       error.value = '找不到该分类';
@@ -228,9 +238,12 @@ const loadData = async (): Promise<void> => {
 };
 
 // 监听路由变化，重新加载数据
-watch(() => route.params.category, () => {
+watch(() => route.params.category, async () => {
   if (blogStore.blogs.length > 0 && blogStore.categories.length > 0) {
-    // 如果数据已经加载，只需检查分类是否存在
+    // 如果数据已经加载，只需加载当前分类的博客
+    await fetchCategoryBlogs();
+    
+    // 检查分类是否存在
     if (category.value && !currentCategory.value) {
       error.value = '找不到该分类';
     } else {
@@ -238,7 +251,7 @@ watch(() => route.params.category, () => {
     }
   } else {
     // 重新加载数据
-    loadData();
+    await loadData();
   }
 });
 

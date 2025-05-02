@@ -283,7 +283,6 @@ const blog = ref<any>(null);
 const categories = ref<any[]>([]);
 const scrollProgress = ref<number>(0);
 const readingTime = ref<number>(0);
-const readingTimeSeconds = ref<number>(0);
 const wordCount = ref<number>(0);
 const notifications = ref<boolean[]>([true, true]);
 const toc = ref<TocItem[]>([]);
@@ -293,17 +292,10 @@ const renderedContent = ref<string>('');
 const blogContentRef = ref<HTMLElement | null>(null);
 const prevPost = ref<PostPreview | null>(null);
 const nextPost = ref<PostPreview | null>(null);
-const catalogBottom = ref<number | null>(null);
-const mainContentBottom = ref<number | null>(null);
 
 const formattedDate = computed(() => {
   if (!blog.value || !blog.value.createTime) return '';
   return formatDate(blog.value.createTime);
-});
-
-const formattedUpdateDate = computed(() => {
-  if (!blog.value || !blog.value.updateTime) return '';
-  return formatDate(blog.value.updateTime);
 });
 
 // 格式化日期
@@ -344,14 +336,14 @@ const formatCommentDate = (date: Date): string => {
 };
 
 // 检查内容是否过期
-const isContentExpired = (updateTime: string): boolean => {
+/* const isContentExpired = (updateTime: string): boolean => {
   if (!updateTime) return false;
   const now = new Date();
   const lastUpdate = new Date(updateTime);
   const diffTime = now.getTime() - lastUpdate.getTime();
   const diffDays = diffTime / (1000 * 3600 * 24);
   return diffDays > 180; // 超过180天视为过期
-};
+}; */
 
 const md = new MarkdownIt({
   html: true,
@@ -615,12 +607,13 @@ const updateActiveHeading = () => {
 
 const updateCatalogPosition = () => {
   const catalog = document.querySelector('.catalog') as HTMLElement;
-  const mainContent = document.querySelector('.main-content') as HTMLElement;
-  const commentsSection = document.querySelector('.comments-section') as HTMLElement;
+  const mainContent = document.querySelector('.content-wrapper');
+  const commentsSection = document.querySelector('.comments-section');
 
   if (catalog && mainContent && commentsSection) {
-    const catalogRect = catalog.getBoundingClientRect();
-    const mainContentRect = mainContent.getBoundingClientRect();
+    // 移除未使用的变量
+    // const catalogRect = catalog.getBoundingClientRect();
+    // const mainContentRect = mainContent.getBoundingClientRect();
     const commentsSectionRect = commentsSection.getBoundingClientRect();
     
     // 计算评论区顶部相对于视口的位置
@@ -647,11 +640,11 @@ const backToTop = () => {
   });
 };
 
+// 保留closeNotification函数但使用它
 const closeNotification = (index: number): void => {
-  if (index === 1) {
-    notifications.value[0] = false;
-  } else if (index === 2) {
-    notifications.value[1] = false;
+  // 确保index在有效范围内
+  if (index >= 0 && index < notifications.value.length) {
+    notifications.value.splice(index, 1);
   }
 };
 

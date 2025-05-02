@@ -1,5 +1,5 @@
 import { http } from '@/utils/http/index.ts'
-import { BaseBlog, BlogDetail, CursorPaginatedResponse } from './types'
+import { BaseBlog, BlogDetail, CursorPaginatedResponse, Category } from './types'
 import { ResponseBody } from '@/utils/http/types'
 
 /**
@@ -41,4 +41,21 @@ export async function getBlogDetail(id: string): Promise<ResponseBody<BlogDetail
 
 export async function getRecommendBlog(postId: string, limit: number ): Promise<ResponseBody<BlogDetail>> {
   return http.get(`/ryu-content/posts/related/${postId}/${limit}`);
+}
+
+/**
+ * 获取所有分类
+ * @returns 分类列表响应
+ */
+export async function getCategories(): Promise<ResponseBody<Category[]>> {
+  return http.get('/ryu-content/categories');
+}
+
+/**
+ * 根据分类名获取博客列表
+ * @param categoryName 分类名
+ * @returns 博客列表响应
+ */
+export async function getBlogsByCategory(categoryName: string): Promise<ResponseBody<BaseBlog[]>> {
+  return http.get(`/ryu-content/posts/category/${categoryName}`);
 }
