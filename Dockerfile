@@ -1,5 +1,5 @@
 # 构建阶段
-FROM node:20-alpine as build-stage
+FROM node:20.12.2-alpine as build-stage
 
 # 安装pnpm
 RUN npm install -g pnpm
@@ -32,4 +32,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 # 启动Nginx
-CMD ["nginx", "-g", "daemon off;"] 
+CMD ["nginx", "-g", "daemon off;"]
