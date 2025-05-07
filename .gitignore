@@ -49,3 +49,4 @@ pnpm-lock.yaml
 # 构建输出
 build/
 out/
+dist-production/

@@ -1,3 +1,7 @@
+// 导入自定义样式文件
+@use './responsive.scss';
+@use './mobile-fixes.scss';
+
 * {
   margin: 0;
   padding: 0;

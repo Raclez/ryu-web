@@ -1,5 +1,8 @@
 <template>
   <div class="home-container">
+    <!-- 页面顶部进度条 -->
+    <div :style="{width: `${scrollProgress}%`}" class="scroll-progress-bar"></div>
+
     <header class="header" @mousemove="showNav" @mouseleave="hideNav">
       <div class="nav" :class="{ 'visible': isNavVisible }" :style="{
         'background-color': `rgba(28, 28, 28, ${navOpacity})`,
@@ -100,7 +103,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 加载更多区域 -->
           <div v-if="blogStore.hasMore" class="load-more" ref="loadMoreTrigger">
             <div v-if="blogStore.loadingMore" class="loading-more">
@@ -136,9 +139,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue';
-import { useRouter } from 'vue-router';
-import { useBlogStore } from '@/store';
+import {computed, nextTick, onBeforeUnmount, onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
+import {useBlogStore} from '@/store';
 
 const router = useRouter();
 const blogStore = useBlogStore();
@@ -149,6 +152,8 @@ const showSearchInput = ref<boolean>(false);
 const searchQuery = ref<string>('');
 const scrollY = ref<number>(0);
 const showBackToTop = ref<boolean>(false);
+const isMobile = ref<boolean>(false);
+const scrollProgress = ref<number>(0);
 const navOpacity = computed(() => {
   // 根据滚动位置计算导航栏透明度
   if (scrollY.value < 50) return 0.35; // 顶部时半透明
@@ -200,6 +205,10 @@ const hideNav = (): void => {
 const handleScroll = (): void => {
   scrollY.value = window.scrollY;
 
+  // 计算滚动进度
+  const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  scrollProgress.value = (scrollY.value / windowHeight) * 100;
+
   // 当用户滚动页面时自动显示导航栏
   if (scrollY.value > 100) {
     isNavVisible.value = true;
@@ -228,7 +237,7 @@ const performSearch = (): void => {
 // 设置监听器观察加载更多元素
 const setupIntersectionObserver = () => {
   if (!loadMoreTrigger.value) return;
-  
+
   const observer = new IntersectionObserver((entries) => {
     const entry = entries[0];
     if (entry.isIntersecting && blogStore.hasMore && !blogStore.loadingMore) {
@@ -238,9 +247,9 @@ const setupIntersectionObserver = () => {
     rootMargin: '200px 0px',
     threshold: 0.1
   });
-  
+
   observer.observe(loadMoreTrigger.value);
-  
+
   return () => {
     observer.disconnect();
   };
@@ -255,7 +264,7 @@ onMounted(async (): Promise<void> => {
     await blogStore.fetchAllBlogs();
     // 添加滚动监听
     window.addEventListener('scroll', handleScroll);
-    
+
     // 设置加载更多的交叉观察器
     nextTick(() => {
       const cleanup = setupIntersectionObserver();
@@ -699,7 +708,7 @@ onBeforeUnmount(() => {
       width: 100%;
       height: 100%;
       position: relative;
-      
+
       .blog-title {
         font-size: 1.5rem;
         margin-bottom: 15px;
@@ -709,7 +718,7 @@ onBeforeUnmount(() => {
         line-height: 1.3;
         font-weight: bold;
       }
-      
+
       .blog-desc {
         color: #bbb;
         font-size: 0.95rem;
@@ -725,7 +734,7 @@ onBeforeUnmount(() => {
         text-overflow: ellipsis;
         width: 100%;
       }
-      
+
       .blog-meta {
         position: absolute;
         bottom: 15px;
@@ -739,12 +748,12 @@ onBeforeUnmount(() => {
         overflow-x: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        
+
         &::-webkit-scrollbar {
           display: none;
         }
       }
-      
+
       .blog-meta > span {
         display: inline-flex;
         align-items: center;
@@ -757,29 +766,29 @@ onBeforeUnmount(() => {
         white-space: nowrap;
         flex: 0 0 auto;
       }
-      
+
       .blog-meta i {
         margin-right: 5px;
       }
-      
+
       .blog-date {
         color: #ffcc80;
       }
-      
+
       .blog-views {
         color: #80cbc4;
       }
-      
+
       .blog-comments {
         color: #ce93d8;
       }
-      
+
       .blog-category {
         color: #90caf9;
       }
     }
   }
-  
+
   .load-more {
     display: flex;
     justify-content: center;
@@ -787,29 +796,29 @@ onBeforeUnmount(() => {
     height: 60px;
     width: 100%;
     margin-top: 10px;
-    
+
     .loading-more {
       display: flex;
       justify-content: center;
       gap: 8px;
-      
+
       .loading-dot {
         width: 8px;
         height: 8px;
         background-color: #ffcc00;
         border-radius: 50%;
         animation: bounce 1.4s infinite ease-in-out both;
-        
+
         &:nth-child(1) {
           animation-delay: -0.32s;
         }
-        
+
         &:nth-child(2) {
           animation-delay: -0.16s;
         }
       }
     }
-    
+
     .load-more-text {
       padding: 8px 20px;
       background-color: rgba(255, 204, 0, 0.2);
@@ -819,14 +828,14 @@ onBeforeUnmount(() => {
       cursor: pointer;
       transition: all 0.3s ease;
       font-family: 'Ma Shan Zheng', cursive;
-      
+
       &:hover {
         background-color: rgba(255, 204, 0, 0.4);
         transform: translateY(-2px);
       }
     }
   }
-  
+
   .no-more-blogs {
     text-align: center;
     padding: 20px;
@@ -834,14 +843,14 @@ onBeforeUnmount(() => {
     font-size: 14px;
     font-family: 'Ma Shan Zheng', cursive;
   }
-  
+
   @keyframes bounce {
-    0%, 80%, 100% { 
+    0%, 80%, 100% {
       transform: scale(0);
-    } 
-    40% { 
+    }
+    40% {
       transform: scale(1.0);
-    } 
+    }
   }
 }
 
@@ -895,112 +904,98 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
-  .header {
-    height: 60vh;
-
-    .nav .menu-wrapper {
-      padding: 0 15px;
-
-      .menu {
-        justify-content: center;
-        width: 100%;
-        gap: 20px;
-        margin: 0 auto;
-
-        .nav-link {
-          font-size: 14px;
-
-          .nav-icon {
-            font-size: 16px;
-          }
-
-          &:after {
-            bottom: -8px;
-            height: 2px;
-          }
-        }
-      }
-
-      .right-actions {
-        position: fixed;
-        right: 15px;
-        top: 15px;
-      }
+  .home-container {
+    .header {
+      background-color: transparent !important;
     }
 
     .banner {
+      height: 200px;
+
       .hero-content {
         .hero-title {
-          font-size: 2.5rem;
+          font-size: 2.2rem;
+          margin-top: 50px;
         }
+      }
+    }
+
+    .main {
+      .container {
+        padding: 10px;
+
+        .blog-list {
+          .blog-card {
+            flex-direction: column;
+            height: auto;
+            max-width: 100%;
+
+            &:nth-child(even) {
+              flex-direction: column; // 确保所有卡片在移动端都是相同方向
+            }
+
+            .blog-thumbnail {
+              width: 100%;
+              height: 160px;
+
+              &:before {
+                opacity: 0; // 移除图片上的白色覆盖层
+                background: none; // 完全移除渐变覆盖
+              }
+            }
+
+            .blog-info {
+              padding: 15px;
+
+              .blog-title {
+                font-size: 1.2rem;
+                margin-bottom: 10px;
+              }
+
+              .blog-desc {
+                font-size: 0.9rem;
+                -webkit-line-clamp: 2; // 限制为2行
+                margin-bottom: 35px; // 为底部元数据留出空间
+                padding: 0;
+              }
+
+              .blog-meta {
+                bottom: 10px;
+                left: 15px;
+                right: 15px;
+                flex-wrap: wrap;
+                justify-content: flex-start; // 从左到右排列
+                gap: 6px;
+
+                span {
+                  font-size: 0.75rem;
+                  padding: 2px 6px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .footer {
+      padding: 20px 15px;
+
+      .copyright, .powered-by, .icp {
+        margin-bottom: 8px;
       }
     }
   }
 
-  .main {
-    padding: 40px 0;
-
-    .container {
-      max-width: 95%;
+  // 保留右上角头像但隐藏搜索
+  .right-actions {
+    .search-container {
+      display: none;
     }
 
-    .blog-card, .blog-card:nth-child(even) {
-      width: 100%;
-      height: auto;
-      flex-direction: column;
-      max-width: 480px;
-      margin-left: auto;
-      margin-right: auto;
-
-      .blog-thumbnail {
-        width: 100%;
-        height: 220px;
-      }
-
-      .blog-info {
-        padding: 20px;
-        position: relative;
-        
-        .blog-title {
-          font-size: 18px;
-          margin-bottom: 12px;
-        }
-        
-        .blog-desc {
-          font-size: 14px;
-          -webkit-line-clamp: 2;
-          margin-bottom: 40px; // 确保在移动设备上也有足够空间
-        }
-        
-        .blog-meta {
-          // 使用绝对定位在各种设备上保持一致
-          position: absolute;
-          bottom: 12px;
-          right: 15px;
-          left: 15px;
-          height: 28px;
-          justify-content: flex-end;
-          gap: 6px;
-        }
-        
-        .blog-meta > span {
-          font-size: 0.7rem;
-          padding: 3px 6px;
-        }
-      }
+    .avatar {
+      display: block !important;
     }
-  }
-
-  // 适配小屏幕的回到顶部按钮
-  .anime-back-to-top {
-    width: 60px;
-    height: 80px;
-    right: 20px;
-  }
-  
-  .pull-text {
-    font-size: 10px;
-    padding: 3px 6px;
   }
 }
 
@@ -1032,11 +1027,11 @@ onBeforeUnmount(() => {
 
     .blog-info {
       padding: 15px 20px;
-      
+
       .blog-title {
         font-size: 17px;
       }
-      
+
       .blog-meta {
         bottom: 10px;
         right: 15px;
@@ -1044,7 +1039,7 @@ onBeforeUnmount(() => {
         height: 26px;
         gap: 5px;
       }
-      
+
       .blog-meta > span {
         padding: 2px 6px;
         font-size: 0.65rem;
@@ -1794,7 +1789,7 @@ onBeforeUnmount(() => {
       width: 100%;
       height: 100%;
       position: relative;
-      
+
       .blog-title {
         font-size: 1.5rem;
         margin-bottom: 15px;
@@ -1804,7 +1799,7 @@ onBeforeUnmount(() => {
         line-height: 1.3;
         font-weight: bold;
       }
-      
+
       .blog-desc {
         color: #bbb;
         font-size: 0.95rem;
@@ -1820,7 +1815,7 @@ onBeforeUnmount(() => {
         text-overflow: ellipsis;
         width: 100%;
       }
-      
+
       .blog-meta {
         position: absolute;
         bottom: 15px;
@@ -1834,12 +1829,12 @@ onBeforeUnmount(() => {
         overflow-x: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        
+
         &::-webkit-scrollbar {
           display: none;
         }
       }
-      
+
       .blog-meta > span {
         display: inline-flex;
         align-items: center;
@@ -1852,29 +1847,29 @@ onBeforeUnmount(() => {
         white-space: nowrap;
         flex: 0 0 auto;
       }
-      
+
       .blog-meta i {
         margin-right: 5px;
       }
-      
+
       .blog-date {
         color: #ffcc80;
       }
-      
+
       .blog-views {
         color: #80cbc4;
       }
-      
+
       .blog-comments {
         color: #ce93d8;
       }
-      
+
       .blog-category {
         color: #90caf9;
       }
     }
   }
-  
+
   .load-more {
     display: flex;
     justify-content: center;
@@ -1882,29 +1877,29 @@ onBeforeUnmount(() => {
     height: 60px;
     width: 100%;
     margin-top: 10px;
-    
+
     .loading-more {
       display: flex;
       justify-content: center;
       gap: 8px;
-      
+
       .loading-dot {
         width: 8px;
         height: 8px;
         background-color: #ffcc00;
         border-radius: 50%;
         animation: bounce 1.4s infinite ease-in-out both;
-        
+
         &:nth-child(1) {
           animation-delay: -0.32s;
         }
-        
+
         &:nth-child(2) {
           animation-delay: -0.16s;
         }
       }
     }
-    
+
     .load-more-text {
       padding: 8px 20px;
       background-color: rgba(255, 204, 0, 0.2);
@@ -1914,14 +1909,14 @@ onBeforeUnmount(() => {
       cursor: pointer;
       transition: all 0.3s ease;
       font-family: 'Ma Shan Zheng', cursive;
-      
+
       &:hover {
         background-color: rgba(255, 204, 0, 0.4);
         transform: translateY(-2px);
       }
     }
   }
-  
+
   .no-more-blogs {
     text-align: center;
     padding: 20px;
@@ -1929,14 +1924,14 @@ onBeforeUnmount(() => {
     font-size: 14px;
     font-family: 'Ma Shan Zheng', cursive;
   }
-  
+
   @keyframes bounce {
-    0%, 80%, 100% { 
+    0%, 80%, 100% {
       transform: scale(0);
-    } 
-    40% { 
+    }
+    40% {
       transform: scale(1.0);
-    } 
+    }
   }
 }
 
@@ -2015,10 +2010,20 @@ onBeforeUnmount(() => {
     height: 80px;
     right: 20px;
   }
-  
+
   .pull-text {
     font-size: 10px;
     padding: 3px 6px;
   }
+}
+
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255, 204, 0, 1) 0%, rgba(254, 95, 85, 1) 100%);
+  z-index: 9999;
+  transition: width 0.1s;
 }
 </style>

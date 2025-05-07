@@ -6,9 +6,13 @@
   <link rel="icon" href="/favicon.ico">
   <title>Ryu的博客</title>
   <meta name="description" content="Ryu的个人博客，分享前端和后端技术笔记">
+    <!-- 添加全局Live2D路径声明，防止重复声明 -->
+    <script type="text/javascript">
+        window.live2d_path = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/';
+    </script>
 </head>
 <body>
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
 </body>
-</html> 
+</html>

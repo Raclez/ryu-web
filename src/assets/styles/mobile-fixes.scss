@@ -1,0 +1,219 @@
+/* 移动端特定修复和全局调整 */
+
+/* 全局移动端修复 */
+@media (max-width: 768px) {
+  /* 页面通用容器宽度限制 */
+  .container {
+    width: 100% !important;
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 确保所有内容都可以在移动端正常滚动 */
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 调整表单元素在移动端的显示 */
+  input, textarea, select, button {
+    font-size: 16px !important; /* 防止iOS上的自动缩放 */
+  }
+
+  /* 调整图片和媒体元素大小 */
+  img, video, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* 确保页眉在移动端有正确的间距，但保持透明背景 */
+  .header {
+    padding-top: 45px; /* 为汉堡菜单留出空间 */
+    background-color: transparent !important; /* 确保页眉没有白色背景 */
+  }
+
+  /* 调整标题元素大小 */
+  h1 {
+    font-size: 1.8rem !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+  }
+
+  h3 {
+    font-size: 1.3rem !important;
+  }
+
+  /* 确保代码块在移动端可以水平滚动 */
+  pre {
+    overflow-x: auto;
+    white-space: pre;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 调整表格在移动端的显示 */
+  table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 修复可能的触摸问题 */
+  a, button, [role="button"] {
+    cursor: pointer;
+    touch-action: manipulation; /* 优化移动端点击体验 */
+  }
+
+  /* 确保固定定位的元素在移动端正确显示 */
+  .fixed-element {
+    position: fixed;
+    z-index: 1000;
+  }
+}
+
+/* 针对特定组件的移动端修复 */
+@media (max-width: 768px) {
+  /* 修复页面底部空白问题 */
+  .footer {
+    margin-bottom: env(safe-area-inset-bottom, 0); /* 支持iPhone X以上的安全区域 */
+    padding-bottom: 20px;
+    text-align: center;
+
+    .copyright, .powered-by, .icp {
+      padding: 5px 0;
+    }
+
+    a {
+      display: inline-block;
+      padding: 3px 5px;
+    }
+  }
+
+  /* 调整导航元素在移动端的点击区域 */
+  .nav-link, .mobile-nav-item {
+    padding: 12px 10px !important;
+    margin: 5px 0 !important;
+  }
+
+  /* 博客详情页优化 */
+  .blog-detail-container {
+    .blog-header {
+      padding: 10px 0 !important;
+    }
+
+    .markdown-body {
+      font-size: 15px !important;
+
+      /* 调整代码块字体大小 */
+      code, pre {
+        font-size: 14px !important;
+      }
+    }
+  }
+
+  /* 确保移动菜单的汉堡按钮背景透明 */
+  .mobile-menu .hamburger {
+    background-color: transparent !important;
+  }
+
+  /* 防止移动端可能出现的页眉白色背景问题 */
+  .home-container .header, .header {
+    background-color: transparent !important;
+  }
+
+  /* 博客卡片图片修复 - 移除白色覆盖 */
+  .blog-card .blog-thumbnail:before {
+    opacity: 0 !important;
+    background: none !important;
+  }
+
+  /* 博客卡片布局优化 */
+  .blog-card {
+    height: auto !important;
+
+    &:nth-child(even) {
+      flex-direction: column !important;
+    }
+
+    .blog-info {
+      .blog-desc {
+        -webkit-line-clamp: 2 !important;
+        margin-bottom: 35px !important;
+      }
+
+      .blog-meta {
+        justify-content: flex-start !important;
+        position: absolute !important;
+        bottom: 10px !important;
+        left: 15px !important;
+        right: 15px !important;
+      }
+    }
+  }
+}
+
+/* 移动端适配样式修复 */
+
+@media (max-width: 768px) {
+  /* 头部导航修复 */
+  .header, .app-header {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+
+    .nav {
+      background-color: transparent !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+  }
+
+  /* 导航菜单元素修复 */
+  .nav .menu-wrapper {
+    .menu {
+      gap: 20px;
+
+      .nav-link {
+        font-size: 14px;
+      }
+    }
+
+    .right-actions {
+      z-index: 1001 !important;
+
+      .avatar {
+        display: block !important;
+        background-color: transparent !important;
+
+        img {
+          background-color: transparent !important;
+        }
+      }
+
+      .search-container {
+        display: none !important;
+      }
+    }
+  }
+
+  /* 修复首页头部 */
+  .home-container {
+    .header {
+      background-color: transparent !important;
+
+      .nav {
+        background-color: transparent !important;
+        backdrop-filter: none !important;
+      }
+    }
+  }
+
+  /* 修复博客详情页头部 */
+  .blog-detail-container {
+    .header {
+      background-color: transparent !important;
+    }
+  }
+}

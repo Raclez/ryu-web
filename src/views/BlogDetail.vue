@@ -57,7 +57,7 @@
         <div class="main-content">
           <div class="blog-content-wrapper">
             <div class="blog-content" ref="blogContentRef" v-html="renderedContent"></div>
-            
+
             <!-- 添加知识共享协议部分 -->
             <div class="license-section">
               <div class="license-container">
@@ -98,7 +98,7 @@
                 </div>
               </div>
             </div>
-          
+
             <!-- 添加评论区部分 -->
             <div class="comments-section">
               <h3 class="comments-title">
@@ -106,7 +106,7 @@
                 评论 ({{ comments.length }})
                 <span class="title-decoration"></span>
               </h3>
-              
+
               <!-- 评论列表 -->
               <div class="comments-list">
                 <transition-group name="comment-fade">
@@ -123,7 +123,7 @@
                         </div>
                         <div class="comment-actions">
                           <button @click="toggleLike(index)" class="like-button" :class="{ 'liked': comment.liked }">
-                            <i class="heart-icon">❤️</i> 
+                            <i class="heart-icon">❤️</i>
                             <span class="like-count">{{ comment.likes }}</span>
                           </button>
                           <button class="reply-button">
@@ -137,7 +137,7 @@
                   </div>
                 </transition-group>
               </div>
-              
+
               <!-- 评论表单 -->
               <div class="comment-form">
                 <div class="form-decorations">
@@ -215,7 +215,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 回到顶部 -->
     <button v-if="!loading && blog && showBackToTop" class="back-to-top" @click="backToTop">
       <span>↑</span>
@@ -234,15 +234,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useBlogStore } from '@/store';
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {useBlogStore} from '@/store';
 import AppHeader from '@/components/AppHeader.vue';
 import Live2DWidget from '@/components/Live2DWidget.vue';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
-import { getRecommendBlog } from '@/api/post';
+import {getRecommendBlog} from '@/api/post';
 
 const route = useRoute();
 const router = useRouter();
@@ -304,7 +304,7 @@ const formatDate = (dateStr: string): string => {
   const now = new Date();
   const diffTime = now.getTime() - date.getTime();
   const diff = Math.floor(diffTime / 1000 / 60 / 60 / 24);
-  
+
   if (diff === 0) {
     return '今天';
   } else if (diff === 1) {
@@ -319,11 +319,11 @@ const formatDate = (dateStr: string): string => {
 // 新增一个专门用于格式化评论日期的函数
 const formatCommentDate = (date: Date): string => {
   if (!date) return '';
-  
+
   const now = new Date();
   const diffTime = now.getTime() - date.getTime();
   const diff = Math.floor(diffTime / 1000 / 60 / 60 / 24);
-  
+
   if (diff === 0) {
     return '今天';
   } else if (diff === 1) {
@@ -402,11 +402,11 @@ const fetchBlogDetail = async (id?: string): Promise<void> => {
     // 渲染Markdown内容
     renderedContent.value = renderContent(blog.value.content);
     const res = await getRecommendBlog(blog.value.id, 2);
-   
+
     if (res.code === 200 && res.data && Array.isArray(res.data)) {
       const recommendBlog = res.data;
       console.log('recommendBlog', recommendBlog[0]);
-      
+
       if (recommendBlog.length > 0 && recommendBlog[0]) {
         prevPost.value = {
           id: recommendBlog[0].id,
@@ -415,7 +415,7 @@ const fetchBlogDetail = async (id?: string): Promise<void> => {
           createTime: new Date() // 添加默认日期，解决TypeScript错误
         };
       }
-      
+
       if (recommendBlog.length > 1 && recommendBlog[1]) {
         nextPost.value = {
           id: recommendBlog[1].id,
@@ -433,7 +433,7 @@ const fetchBlogDetail = async (id?: string): Promise<void> => {
     //   coverImageUrl: 'https://picsum.photos/400/300?random=4',
     //   createTime: new Date('2023-04-20')
     // };
-    
+
     // nextPost.value = {
     //   id: '3',
     //   title: 'Drools规则引擎-CSDN博客',
@@ -615,11 +615,11 @@ const updateCatalogPosition = () => {
     // const catalogRect = catalog.getBoundingClientRect();
     // const mainContentRect = mainContent.getBoundingClientRect();
     const commentsSectionRect = commentsSection.getBoundingClientRect();
-    
+
     // 计算评论区顶部相对于视口的位置
     const commentsSectionTop = commentsSectionRect.top;
     const viewportHeight = window.innerHeight;
-    
+
     // 如果评论区进入可视区域
     if (commentsSectionTop < viewportHeight) {
       // 计算目录应该缩短的距离
@@ -725,7 +725,7 @@ const submitComment = (): void => {
     alert('昵称和评论内容不能为空！');
     return;
   }
-  
+
   const comment: CommentType = {
     name: newComment.value.name,
     avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`,
@@ -734,9 +734,9 @@ const submitComment = (): void => {
     likes: 0,
     liked: false
   };
-  
+
   comments.value.unshift(comment);
-  
+
   // 重置表单
   newComment.value = {
     name: '',
@@ -918,7 +918,7 @@ const goToPost = (post: PostPreview): void => {
     &:first-child {
       border-left-color: #3498db;
     }
-    
+
     &:hover {
       background-color: rgba(50, 50, 50, 0.7);
       transform: translateY(-2px);
@@ -927,7 +927,7 @@ const goToPost = (post: PostPreview): void => {
     span {
       display: flex;
       align-items: center;
-      
+
       &:before {
         content: '';
         display: inline-block;
@@ -971,9 +971,9 @@ const goToPost = (post: PostPreview): void => {
 // 内容布局
 .content-container {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1000px) 300px;
+  grid-template-columns: 120px minmax(0, 1200px) 300px; // 增加中间内容区域宽度
   gap: 30px;
-  max-width: 1460px;
+  max-width: 1620px; // 增加整体最大宽度
   margin: 0 auto;
   padding: 30px 20px;
 
@@ -987,6 +987,7 @@ const goToPost = (post: PostPreview): void => {
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    padding: 20px 10px;
 
     .left-sidebar {
       display: none;
@@ -1016,273 +1017,316 @@ const goToPost = (post: PostPreview): void => {
     font-size: 16px;
     line-height: 1.8;
     color: #e0e0e0;
+    background-color: #1c1c1c;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
 
-    // 内容区域的宽度限制
-    > div {
-      max-width: 100%;
-      margin: 0 auto;
-      letter-spacing: 0.3px;
-    }
+    .blog-content {
+      padding: 40px;
 
-    // 标题样式
-    :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
-      margin-top: 50px;
-      margin-bottom: 25px;
-      color: white;
-      font-weight: 600;
-      position: relative;
-      scroll-margin-top: 100px; // 跳转时留出顶部空间
-      transition: color 0.3s ease;
-      letter-spacing: 0.5px;
-      line-height: 1.4;
-
-      &.highlight-heading {
-        color: #ffcc00;
-        animation: pulse 2s ease;
-      }
-    }
-
-    @keyframes pulse {
-      0% {
-        background-color: rgba(255, 204, 0, 0.1);
-      }
-      50% {
-        background-color: rgba(255, 204, 0, 0.2);
-      }
-      100% {
-        background-color: transparent;
-      }
-    }
-
-    :deep(h1) {
-      font-size: 1.8em;
-      border-bottom: 1px solid #333;
-      padding-bottom: 10px;
-      color: #ffcc00;
-    }
-
-    :deep(h2) {
-      font-size: 1.5em;
-    }
-
-    :deep(h3) {
-      font-size: 1.3em;
-    }
-
-    :deep(h4) {
-      font-size: 1.1em;
-    }
-
-    // 段落样式
-    :deep(p) {
-      margin-bottom: 24px;
-      text-align: justify;
-      line-height: 1.9;
-      letter-spacing: 0.3px;
-      font-size: 16px;
-    }
-
-    // 链接样式
-    :deep(a) {
-      color: #ffcc00;
-      text-decoration: none;
-      position: relative;
-
-      &:hover {
-        color: #ffdd33;
+      @media (max-width: 768px) {
+        padding: 20px 15px;
       }
 
-      &:after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        transform: scaleX(0);
-        height: 1px;
-        bottom: 0;
-        left: 0;
-        background-color: #ffcc00;
-        transform-origin: bottom right;
-        transition: transform 0.3s ease-out;
-      }
-
-      &:hover:after {
-        transform: scaleX(1);
-        transform-origin: bottom left;
-      }
-    }
-
-    // 列表样式
-    :deep(ul), :deep(ol) {
-      margin-bottom: 28px;
-      margin-top: 16px;
-      padding-left: 26px;
-      counter-reset: list-item;
-
-      li {
-        margin-bottom: 12px;
-        line-height: 1.7;
-        position: relative;
-        padding-left: 4px;
-      }
-
-      li::before {
-        content: '';
-        position: absolute;
-        left: -14px;
-        top: 10px;
-        width: 6px;
-        height: 6px;
-        background-color: rgba(255, 204, 0, 0.7);
-        border-radius: 50%;
-      }
-    }
-
-    :deep(ol) {
-      counter-reset: item;
-
-      li {
-        counter-increment: item;
-        position: relative;
-        padding-left: 4px;
-      }
-
-      li::before {
-        content: counter(item) ".";
-        position: absolute;
-        left: -20px;
-        top: 0;
-        background-color: transparent;
-        color: rgba(255, 204, 0, 0.8);
-        font-weight: bold;
-        border-radius: 0;
-        width: auto;
-        height: auto;
-      }
-    }
-
-    // 引用样式
-    :deep(blockquote) {
-      background-color: rgba(44, 44, 44, 0.5);
-      border-left: 4px solid rgba(255, 204, 0, 0.7);
-      padding: 20px;
-      margin: 30px 0;
-      color: #d0d0d0;
-      font-style: italic;
-      font-size: 15px;
-      line-height: 1.7;
-      letter-spacing: 0.3px;
-      border-radius: 0 4px 4px 0;
-  position: relative;
-
-      p {
-        margin-bottom: 0;
-      }
-
-      &::before {
-        content: '"';
-        font-size: 28px;
-        color: rgba(255, 204, 0, 0.4);
-        position: absolute;
-        left: 10px;
-  top: 0;
-      }
-    }
-
-    // 代码样式
-    :deep(.code-block) {
-      margin: 25px 0;
-      border-radius: 8px;
-      overflow: hidden;
-      background-color: #161b22;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-
-      .code-header {
-        display: flex;
-        align-items: center;
-        background-color: #0d1117;
-        padding: 8px 12px;
-        border-bottom: 1px solid #30363d;
-
-        .code-dots {
-          display: flex;
-          gap: 6px;
-          margin-right: 15px;
-
-          .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-
-            &.red { background-color: #ff5f56; }
-            &.yellow { background-color: #ffbd2e; }
-            &.green { background-color: #27c93f; }
-          }
-        }
-
-        .code-lang {
-          flex: 1;
-          font-size: 12px;
-          color: #8b949e;
-        }
-
-        .code-copy {
-          font-size: 12px;
-          color: #8b949e;
-          cursor: pointer;
-          padding: 2px 6px;
-          border-radius: 4px;
-
-          &:hover {
-            background-color: #30363d;
-            color: #c9d1d9;
-          }
-
-          &.copied {
-            color: #27c93f;
-          }
-        }
-      }
-
-      /* 强制增强特异性 */
-      pre, pre code, .hljs {
-        &::-webkit-scrollbar {
-          height: 2px !important; 
-          width: 2px !important;
-        }
-
-        &::-webkit-scrollbar-track {
-          background: #161b22 !important;
-        }
-
-        &::-webkit-scrollbar-thumb {
-          background: rgba(255, 204, 0, 0.5) !important; /* 黄色滚动条 */
-          border-radius: 0 !important;
-          border: none !important;
-        }
-
-        &::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 204, 0, 0.8) !important; /* 黄色滚动条悬停状态 */
-        }
-      }
-
-      pre {
-        margin: 0;
-        padding: 12px;
-        overflow-x: auto;
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        font-size: 14px;
-        line-height: 1.5;
+      // 内容区域的宽度限制
+      > div {
         max-width: 100%;
-        width: 100%;
+        margin: 0 auto;
+        letter-spacing: 0.3px;
+      }
 
-        code {
-          background: transparent;
-          padding: 0;
-          white-space: pre;
-          word-break: normal;
-          word-wrap: normal;
+      // 代码块样式
+      :deep(.code-block) {
+        margin: 30px -40px; // 使用更大的负边距使代码块超出内容区域
+        border-radius: 0;
+        overflow: visible; // 改为visible，确保代码可以超出容器
+        background-color: #161b22;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        position: relative; // 添加相对定位
+        width: calc(100% + 80px); // 宽度增加与负margin相对应
+
+        @media (max-width: 768px) {
+          margin: 25px -15px; // 移动端调整
+          width: calc(100% + 30px); // 移动端宽度调整
+        }
+
+        .code-header {
+          display: flex;
+          align-items: center;
+          background-color: #0d1117;
+          padding: 10px 40px; // 增加内边距与内容对齐
+          border-bottom: 1px solid #30363d;
+
+          @media (max-width: 768px) {
+            padding: 8px 15px; // 移动端调整
+          }
+
+          .code-dots {
+            display: flex;
+            gap: 6px;
+            margin-right: 15px;
+
+            .dot {
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+
+              &.red {
+                background-color: #ff5f56;
+              }
+
+              &.yellow {
+                background-color: #ffbd2e;
+              }
+
+              &.green {
+                background-color: #27c93f;
+              }
+            }
+          }
+
+          .code-lang {
+            flex: 1;
+            font-size: 12px;
+            color: #8b949e;
+          }
+
+          .code-copy {
+            font-size: 12px;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+
+            &:hover {
+              background-color: #30363d;
+              color: #c9d1d9;
+            }
+
+            &.copied {
+              color: #27c93f;
+            }
+          }
+        }
+
+        /* 强制增强特异性 */
+        pre, pre code, .hljs {
+          &::-webkit-scrollbar {
+            height: 8px !important; // 增加滚动条高度
+            width: 8px !important;
+          }
+
+          &::-webkit-scrollbar-track {
+            background: #161b22 !important;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            background: rgba(255, 204, 0, 0.5) !important; /* 黄色滚动条 */
+            border-radius: 4px !important;
+            border: none !important;
+          }
+
+          &::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 204, 0, 0.8) !important; /* 黄色滚动条悬停状态 */
+          }
+        }
+
+        pre {
+          margin: 0;
+          padding: 25px 40px; // 增加内边距使代码显示更舒适
+          overflow-x: auto;
+          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+          font-size: 15px; // 增加字体大小
+          line-height: 1.6;
+          max-width: 100%;
+          width: 100%;
+          background-color: #161b22; // 确保背景颜色正确
+
+          @media (max-width: 768px) {
+            padding: 15px; // 移动端调整
+            font-size: 13px;
+          }
+
+          code {
+            background: transparent;
+            padding: 0;
+            white-space: pre;
+            word-break: normal;
+            word-wrap: normal;
+            width: auto;
+            max-width: 100%;
+            position: relative;
+
+            &::after {
+              content: none;
+              display: none;
+            }
+          }
+        }
+      }
+
+      // 标题样式
+      :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
+        margin-top: 50px;
+        margin-bottom: 25px;
+        color: white;
+        font-weight: 600;
+        position: relative;
+        scroll-margin-top: 100px; // 跳转时留出顶部空间
+        transition: color 0.3s ease;
+        letter-spacing: 0.5px;
+        line-height: 1.4;
+
+        &.highlight-heading {
+          color: #ffcc00;
+          animation: pulse 2s ease;
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          background-color: rgba(255, 204, 0, 0.1);
+        }
+        50% {
+          background-color: rgba(255, 204, 0, 0.2);
+        }
+        100% {
+          background-color: transparent;
+        }
+      }
+
+      :deep(h1) {
+        font-size: 1.8em;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+        color: #ffcc00;
+      }
+
+      :deep(h2) {
+        font-size: 1.5em;
+      }
+
+      :deep(h3) {
+        font-size: 1.3em;
+      }
+
+      :deep(h4) {
+        font-size: 1.1em;
+      }
+
+      // 段落样式
+      :deep(p) {
+        margin-bottom: 24px;
+        text-align: justify;
+        line-height: 1.9;
+        letter-spacing: 0.3px;
+        font-size: 16px;
+      }
+
+      // 链接样式
+      :deep(a) {
+        color: #ffcc00;
+        text-decoration: none;
+        position: relative;
+
+        &:hover {
+          color: #ffdd33;
+        }
+
+        &:after {
+          content: '';
+          position: absolute;
+          width: 100%;
+          transform: scaleX(0);
+          height: 1px;
+          bottom: 0;
+          left: 0;
+          background-color: #ffcc00;
+          transform-origin: bottom right;
+          transition: transform 0.3s ease-out;
+        }
+
+        &:hover:after {
+          transform: scaleX(1);
+          transform-origin: bottom left;
+        }
+      }
+
+      // 列表样式
+      :deep(ul), :deep(ol) {
+        margin-bottom: 28px;
+        margin-top: 16px;
+        padding-left: 26px;
+        counter-reset: list-item;
+
+        li {
+          margin-bottom: 12px;
+          line-height: 1.7;
+          position: relative;
+          padding-left: 4px;
+        }
+
+        li::before {
+          content: '';
+          position: absolute;
+          left: -14px;
+          top: 10px;
+          width: 6px;
+          height: 6px;
+          background-color: rgba(255, 204, 0, 0.7);
+          border-radius: 50%;
+        }
+      }
+
+      :deep(ol) {
+        counter-reset: item;
+
+        li {
+          counter-increment: item;
+          position: relative;
+          padding-left: 4px;
+        }
+
+        li::before {
+          content: counter(item) ".";
+          position: absolute;
+          left: -20px;
+          top: 0;
+          background-color: transparent;
+          color: rgba(255, 204, 0, 0.8);
+          font-weight: bold;
+          border-radius: 0;
           width: auto;
-          max-width: initial;
+          height: auto;
+        }
+      }
+
+      // 引用样式
+      :deep(blockquote) {
+        background-color: rgba(44, 44, 44, 0.5);
+        border-left: 4px solid rgba(255, 204, 0, 0.7);
+        padding: 20px;
+        margin: 30px 0;
+        color: #d0d0d0;
+        font-style: italic;
+        font-size: 15px;
+        line-height: 1.7;
+        letter-spacing: 0.3px;
+        border-radius: 0 4px 4px 0;
+        position: relative;
+
+        p {
+          margin-bottom: 0;
+        }
+
+        &::before {
+          content: '"';
+          font-size: 28px;
+          color: rgba(255, 204, 0, 0.4);
+          position: absolute;
+          left: 10px;
+          top: 0;
         }
       }
     }
@@ -1496,7 +1540,7 @@ const goToPost = (post: PostPreview): void => {
     .prev-post:hover .related-post-overlay, .next-post:hover .related-post-overlay {
       background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.9));
     }
-    
+
     // 评论区
     .comments-section {
       margin-top: 40px;
@@ -1504,7 +1548,7 @@ const goToPost = (post: PostPreview): void => {
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       animation: fadeIn 0.8s ease;
       position: relative;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -1526,13 +1570,13 @@ const goToPost = (post: PostPreview): void => {
       font-family: 'Comic Sans MS', 'Ma Shan Zheng', cursive;
       position: relative;
       padding-bottom: 12px;
-      
+
       .comments-icon {
         margin-right: 10px;
         font-size: 22px;
         animation: bounce 2s infinite;
       }
-      
+
       .title-decoration {
         position: absolute;
         right: 0;
@@ -1544,7 +1588,7 @@ const goToPost = (post: PostPreview): void => {
         background-size: auto 100%;
         opacity: 0.4;
       }
-      
+
       &::after {
         content: '';
         position: absolute;
@@ -1577,15 +1621,15 @@ const goToPost = (post: PostPreview): void => {
       border-bottom: 1px dashed rgba(255, 204, 0, 0.2);
       position: relative;
       transition: all 0.3s ease;
-      
+
       &:hover {
         transform: translateX(5px);
-        
+
         .comment-avatar .avatar-glow {
           opacity: 0.8;
         }
       }
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -1596,11 +1640,11 @@ const goToPost = (post: PostPreview): void => {
         background: linear-gradient(to bottom, rgba(255, 204, 0, 0.5), transparent);
         z-index: 0;
       }
-      
+
       &:last-child {
         margin-bottom: 0;
         border-bottom: none;
-        
+
         &::before {
           display: none;
         }
@@ -1614,7 +1658,7 @@ const goToPost = (post: PostPreview): void => {
       flex-shrink: 0;
       position: relative;
       z-index: 1;
-      
+
       img {
         width: 100%;
         height: 100%;
@@ -1624,7 +1668,7 @@ const goToPost = (post: PostPreview): void => {
         box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
         transition: all 0.3s ease;
       }
-      
+
       .avatar-glow {
         position: absolute;
         top: -2px;
@@ -1646,7 +1690,7 @@ const goToPost = (post: PostPreview): void => {
       border-radius: 10px;
       padding: 15px;
       position: relative;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -1682,7 +1726,7 @@ const goToPost = (post: PostPreview): void => {
       font-size: 14px;
       position: relative;
       z-index: 1;
-      
+
       &::after {
         content: '';
         position: absolute;
@@ -1696,7 +1740,7 @@ const goToPost = (post: PostPreview): void => {
         transition: transform 0.3s ease;
         z-index: -1;
       }
-      
+
       &:hover::after {
         transform: scaleX(1);
       }
@@ -1707,7 +1751,7 @@ const goToPost = (post: PostPreview): void => {
       color: rgba(255, 255, 255, 0.5);
       position: relative;
       padding-left: 12px;
-      
+
       &::before {
         content: '•';
         position: absolute;
@@ -1726,13 +1770,13 @@ const goToPost = (post: PostPreview): void => {
       position: relative;
       padding: 10px 0;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-      
+
       &::first-letter {
         font-size: 1.1em;
         font-weight: 500;
         color: #ffcc00;
       }
-      
+
       &::before {
         content: '"';
         position: absolute;
@@ -1742,7 +1786,7 @@ const goToPost = (post: PostPreview): void => {
         color: rgba(255, 204, 0, 0.3);
         font-family: 'Georgia', serif;
       }
-      
+
       &::after {
         content: '"';
         position: absolute;
@@ -1774,20 +1818,20 @@ const goToPost = (post: PostPreview): void => {
 
     .like-button {
       color: rgba(255, 255, 255, 0.7);
-      
+
       &:hover {
         color: #ff6b6b;
         background-color: rgba(255, 107, 107, 0.1);
       }
-      
+
       &.liked {
         color: #ff6b6b;
         background-color: rgba(255, 107, 107, 0.1);
-        
+
         .heart-icon {
           animation: heartBeat 0.3s ease;
         }
-        
+
         .like-count {
           animation: popIn 0.3s ease;
         }
@@ -1796,7 +1840,7 @@ const goToPost = (post: PostPreview): void => {
 
     .reply-button {
       color: rgba(255, 255, 255, 0.7);
-      
+
       &:hover {
         color: #64b5f6;
         background-color: rgba(100, 181, 246, 0.1);
@@ -1817,7 +1861,7 @@ const goToPost = (post: PostPreview): void => {
       border: 1px solid rgba(255, 204, 0, 0.1);
       position: relative;
       overflow: hidden;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -1827,7 +1871,7 @@ const goToPost = (post: PostPreview): void => {
         height: 3px;
         background: linear-gradient(90deg, #ffcc00, transparent);
       }
-      
+
       &::after {
         content: '';
         position: absolute;
@@ -1839,7 +1883,7 @@ const goToPost = (post: PostPreview): void => {
         border-radius: 50%;
         z-index: 0;
       }
-      
+
       .form-decorations {
         position: absolute;
         top: 0;
@@ -1849,7 +1893,7 @@ const goToPost = (post: PostPreview): void => {
         overflow: hidden;
         pointer-events: none;
         z-index: 0;
-        
+
         .decoration-star {
           position: absolute;
           width: 20px;
@@ -1857,7 +1901,7 @@ const goToPost = (post: PostPreview): void => {
           background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ffcc00" d="M12,1L9,9H2L7,14L5,21L12,17L19,21L17,14L22,9H15Z" /></svg>');
           background-size: contain;
           opacity: 0.15;
-          
+
           &.decoration-star-1 {
             top: 20px;
             right: 50px;
@@ -1865,7 +1909,7 @@ const goToPost = (post: PostPreview): void => {
             height: 15px;
             animation: floatStar 5s infinite ease-in-out;
           }
-          
+
           &.decoration-star-2 {
             bottom: 80px;
             right: 30px;
@@ -1873,7 +1917,7 @@ const goToPost = (post: PostPreview): void => {
             height: 20px;
             animation: floatStar 7s infinite ease-in-out 1s;
           }
-          
+
           &.decoration-star-3 {
             bottom: 30px;
             left: 40px;
@@ -1898,7 +1942,7 @@ const goToPost = (post: PostPreview): void => {
       display: flex;
       align-items: center;
       font-family: 'Comic Sans MS', 'Ma Shan Zheng', cursive;
-      
+
       .form-icon {
         margin-right: 10px;
         font-size: 20px;
@@ -1917,7 +1961,7 @@ const goToPost = (post: PostPreview): void => {
       display: flex;
       gap: 20px;
       margin-bottom: 20px;
-      
+
       @media (max-width: 600px) {
         flex-direction: column;
         gap: 15px;
@@ -1929,7 +1973,7 @@ const goToPost = (post: PostPreview): void => {
       margin-bottom: 20px;
       position: relative;
       z-index: 1;
-      
+
       label {
         display: block;
         margin-bottom: 10px;
@@ -1938,10 +1982,10 @@ const goToPost = (post: PostPreview): void => {
         font-weight: 500;
         transition: color 0.3s ease;
       }
-      
+
       .input-wrapper, .textarea-wrapper {
         position: relative;
-        
+
         .input-icon {
           position: absolute;
           left: 12px;
@@ -1953,7 +1997,7 @@ const goToPost = (post: PostPreview): void => {
           pointer-events: none;
         }
       }
-      
+
       input, textarea {
         width: 100%;
         padding: 12px 15px 12px 40px;
@@ -1964,23 +2008,23 @@ const goToPost = (post: PostPreview): void => {
         font-size: 14px;
         transition: all 0.3s ease;
         box-sizing: border-box;
-        
+
         &:focus {
           outline: none;
           border-color: rgba(255, 204, 0, 0.5);
           box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.15);
-          
+
           & + .input-icon {
             color: #ffcc00;
             transform: translateY(-50%) scale(1.1);
           }
         }
-        
+
         &::placeholder {
           color: rgba(255, 255, 255, 0.3);
         }
       }
-      
+
       textarea {
         min-height: 120px;
         resize: vertical;
@@ -1990,10 +2034,10 @@ const goToPost = (post: PostPreview): void => {
         z-index: 1;
         position: relative;
       }
-      
+
       .textarea-wrapper {
         position: relative;
-        
+
         .textarea-decoration {
           position: absolute;
           right: 10px;
@@ -2002,7 +2046,7 @@ const goToPost = (post: PostPreview): void => {
           pointer-events: none;
           opacity: 0.3;
           transition: opacity 0.3s ease;
-          
+
           .anime-decoration {
             width: 70px;
             height: 70px;
@@ -2012,12 +2056,12 @@ const goToPost = (post: PostPreview): void => {
             transform: rotate(-15deg);
           }
         }
-        
+
         &:hover .textarea-decoration {
           opacity: 0.5;
         }
       }
-      
+
       &:focus-within {
         label {
           color: #ffcc00;
@@ -2032,18 +2076,18 @@ const goToPost = (post: PostPreview): void => {
       margin-top: 10px;
       flex-wrap: wrap;
       gap: 15px;
-      
+
       @media (max-width: 600px) {
         flex-direction: column;
         align-items: flex-start;
       }
-      
+
       .comment-tips {
         display: flex;
         align-items: center;
         color: rgba(255, 255, 255, 0.6);
         font-size: 13px;
-        
+
         .tip-icon {
           margin-right: 6px;
           font-size: 15px;
@@ -2075,12 +2119,12 @@ const goToPost = (post: PostPreview): void => {
       position: relative;
       overflow: hidden;
       z-index: 1;
-      
+
       .submit-icon {
         font-size: 18px;
         transform: translateY(1px);
       }
-      
+
       .button-effect {
         position: absolute;
         top: 0;
@@ -2092,21 +2136,21 @@ const goToPost = (post: PostPreview): void => {
         transition: transform 0.3s ease;
         z-index: -1;
       }
-      
+
       &:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4);
         background: linear-gradient(45deg, #ffda44, #ffae00);
-        
+
         .button-effect {
           transform: translateX(100%);
         }
-        
+
         .submit-icon {
           animation: iconWiggle 0.5s ease;
         }
       }
-      
+
       &:active {
         transform: translateY(0);
         box-shadow: 0 2px 5px rgba(255, 204, 0, 0.3);
@@ -2376,7 +2420,7 @@ const goToPost = (post: PostPreview): void => {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -2394,7 +2438,7 @@ const goToPost = (post: PostPreview): void => {
     letter-spacing: 0.5px;
     color: #aaa;
     transition: color 0.3s ease;
-    
+
     &:hover {
       color: #ffcc00;
     }
@@ -2404,7 +2448,7 @@ const goToPost = (post: PostPreview): void => {
     font-size: 12px;
     color: #777;
     transition: color 0.3s ease;
-    
+
     &:hover {
       color: #999;
     }
@@ -2419,7 +2463,7 @@ const goToPost = (post: PostPreview): void => {
     &:hover {
       color: #ffd633;
     }
-    
+
     &:after {
       content: '';
       position: absolute;

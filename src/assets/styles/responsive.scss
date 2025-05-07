@@ -1,0 +1,235 @@
+/* 响应式布局样式 */
+
+// 移动设备断点
+$breakpoint-small: 480px; // 小型手机
+$breakpoint-medium: 768px; // 平板和大型手机
+$breakpoint-large: 1024px; // 笔记本电脑/小型桌面
+$breakpoint-xlarge: 1200px; // 大型桌面显示器
+
+// 全局响应式调整
+@media (max-width: $breakpoint-medium) {
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  // 隐藏 Live2D Widget 在移动端
+  #live2d-widget {
+    display: none !important;
+  }
+}
+
+// 导航菜单响应式
+@media (max-width: $breakpoint-medium) {
+  // 在移动端隐藏PC导航元素
+  .home-container .nav, .header .nav {
+    // 在移动端完全隐藏PC导航，因为我们使用汉堡菜单替代
+    display: none !important;
+  }
+
+  // Banner 响应式调整
+  .home-container .banner .hero-content .hero-title {
+    font-size: 2.5rem;
+  }
+
+  // 确保页面顶部有足够空间放置汉堡菜单，但不添加任何背景色
+  .home-container .header, .header {
+    padding-top: 10px;
+    height: 50px;
+    background-color: transparent !important;
+  }
+}
+
+// 博客列表响应式
+@media (max-width: $breakpoint-medium) {
+  .home-container .main .container {
+    padding: 15px;
+    margin-top: 15px;
+
+    .blog-list {
+      gap: 15px;
+
+      .blog-card {
+        flex-direction: column;
+        height: auto;
+        max-width: 100%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+        &:nth-child(even) {
+          flex-direction: column; // 确保所有卡片在移动端都是同方向
+        }
+
+        .blog-thumbnail {
+          width: 100%;
+          height: 160px;
+
+          &:before {
+            opacity: 0 !important; // 移除白色覆盖层
+            background: none !important; // 完全移除背景
+          }
+        }
+
+        .blog-info {
+          padding: 12px 15px;
+
+          .blog-title {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .blog-desc {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            -webkit-line-clamp: 2;
+            margin-bottom: 35px;
+            padding: 0;
+          }
+
+          .blog-meta {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            height: auto;
+            min-height: 26px;
+            gap: 6px;
+
+            span {
+              font-size: 0.75rem;
+              padding: 2px 6px;
+              margin-bottom: 2px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 博客详情页响应式
+@media (max-width: $breakpoint-medium) {
+  .blog-detail-container {
+    .blog-content {
+      padding: 15px;
+      margin-top: 40px; // 添加顶部空间给汉堡菜单
+
+      .blog-header .blog-title {
+        font-size: 1.5rem;
+      }
+
+      .markdown-body {
+        pre {
+          overflow-x: auto;
+        }
+
+        img {
+          max-width: 100%;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    }
+
+    .toc-container {
+      position: static;
+      width: 100%;
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  }
+}
+
+// 页脚响应式
+@media (max-width: $breakpoint-medium) {
+  .footer {
+    padding: 20px 15px;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+
+    .copyright, .powered-by, .icp {
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+    }
+
+    a {
+      display: inline-block;
+      padding: 3px;
+      border-radius: 4px;
+    }
+
+    a:hover {
+      background-color: rgba(255, 204, 0, 0.1);
+    }
+  }
+}
+
+// 分类页面响应式
+@media (max-width: $breakpoint-medium) {
+  .category-container {
+    padding: 15px;
+    margin-top: 40px; // 添加顶部空间给汉堡菜单
+
+    .category-list {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+  }
+
+  .category-view-container {
+    padding: 15px;
+    margin-top: 40px; // 添加顶部空间给汉堡菜单
+
+    .category-header h1 {
+      font-size: 1.8rem;
+    }
+  }
+}
+
+// 返回顶部按钮响应式
+@media (max-width: $breakpoint-medium) {
+  .anime-back-to-top {
+    right: 15px;
+    bottom: 15px;
+    transform: scale(0.8);
+  }
+}
+
+// 调整所有页面保持一致的顶部间距
+@media (max-width: $breakpoint-medium) {
+  .home-container, .blog-detail-container, .category-container, .category-view-container {
+    margin-top: 40px; // 为顶部汉堡菜单留出空间
+  }
+
+  // 保留头像显示在右上角
+  .right-actions {
+    position: fixed;
+    right: 15px;
+    top: 15px;
+    z-index: 1000;
+
+    .search-container {
+      display: none; // 在移动端隐藏搜索框
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      display: block; // 确保头像显示
+    }
+  }
+}

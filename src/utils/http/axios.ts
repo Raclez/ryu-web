@@ -1,5 +1,6 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { CreateAxiosOptions, RequestOptions, ResponseBody } from './types';
+import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse} from 'axios';
+import {CreateAxiosOptions, RequestOptions, ResponseBody} from './types';
+import {TokenService} from '../token';
 
 // 请求计数器
 let pendingRequestCount = 0;
@@ -39,9 +40,7 @@ export class AxiosHttpClient {
 
         // 添加Token
         if (requestOptions.withToken !== false) {
-          //TODO
-          // const token = localStorage.getItem('token');
-          const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOjEsInJuU3RyIjoiUW1CbUs0QWJCYTBRTmJYM1lqekh5NXFJM1R0NlVzbEMifQ.XrSVzn0aoFkslx6CYO7i1LSZ0YXLSRBgv7uckAvRkLw"
+          const token = TokenService.getToken();
           if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
           }
@@ -125,7 +124,7 @@ export class AxiosHttpClient {
         case 401:
           message = '未授权，请登录';
           // 可以在这里实现登出逻辑
-          // logout();
+          TokenService.clearAll();
           break;
         case 403:
           message = '拒绝访问';

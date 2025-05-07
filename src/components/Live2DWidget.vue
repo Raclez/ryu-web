@@ -2,12 +2,12 @@
   <div class="live2d-container" :class="{ 'chat-open': showChat, 'music-open': showMusic, 'translator-open': showTranslator, 'weather-open': showWeather, 'todo-open': showTodo }">
     <!-- 重要：移除自定义工具栏的HTML结构 -->
     <div id="live2d-widget"></div>
-    
+
     <!-- 对话气泡 -->
     <div class="live2d-speech-bubble" v-if="showSpeechBubble">
       <div class="bubble-content">{{ message }}</div>
     </div>
-    
+
     <!-- AI 聊天界面 -->
     <div class="live2d-chat-panel" v-if="showChat">
       <div class="panel-header">
@@ -29,10 +29,10 @@
       </div>
     </div>
       <div class="panel-footer">
-        <input 
-          type="text" 
-          v-model="userInput" 
-          placeholder="输入消息..." 
+        <input
+          v-model="userInput"
+          placeholder="输入消息..."
+          type="text"
           @keyup.enter="sendMessage"
           class="chat-input"
         />
@@ -42,7 +42,7 @@
         </button>
       </div>
     </div>
-    
+
     <!-- 网易云音乐播放器面板 -->
     <div class="live2d-music-panel" v-if="showMusic">
       <div class="panel-header">
@@ -53,7 +53,7 @@
         <!-- APlayer将在这里挂载 -->
       </div>
     </div>
-    
+
     <!-- 翻译助手界面 -->
     <div class="live2d-translator-panel" v-if="showTranslator">
       <div class="panel-header">
@@ -75,29 +75,29 @@
             </select>
           </div>
         </div>
-        
+
         <div class="translator-input">
-          <textarea 
-            v-model="sourceText" 
+          <textarea
+            v-model="sourceText"
             placeholder="请输入要翻译的文本..."
             rows="4"
           ></textarea>
         </div>
-        
+
         <div class="translator-actions">
           <button @click="translateText" :disabled="isTranslating" class="translate-btn">
             <span v-if="isTranslating">翻译中...</span>
             <span v-else>翻译</span>
           </button>
         </div>
-        
+
         <div class="translator-result" v-if="translatedText">
           <div class="result-label">翻译结果:</div>
           <div class="result-text">{{ translatedText }}</div>
         </div>
       </div>
     </div>
-    
+
     <!-- 天气界面 -->
     <div class="live2d-weather-panel" v-if="showWeather">
       <div class="panel-header">
@@ -106,10 +106,10 @@
       </div>
       <div class="panel-body">
         <div class="weather-search">
-          <input 
-            type="text" 
-            v-model="weatherCity" 
-            placeholder="输入城市名..." 
+          <input
+            v-model="weatherCity"
+            placeholder="输入城市名..."
+            type="text"
             @keyup.enter="getWeatherByCity"
           />
           <button @click="getWeatherByCity" :disabled="isLoadingWeather">
@@ -117,11 +117,11 @@
             <span v-else>🔍</span>
           </button>
         </div>
-        
+
         <div class="weather-loading" v-if="isLoadingWeather">
           正在获取天气数据...
         </div>
-        
+
         <div class="weather-result" v-else-if="weatherData">
           <div class="weather-current">
             <div class="weather-city">{{ weatherData.city }}</div>
@@ -132,12 +132,12 @@
               <div class="weather-wind">风力: {{ weatherData.wind }}级</div>
             </div>
           </div>
-          
+
           <div class="weather-forecast">
             <div class="forecast-title">未来天气</div>
             <div class="forecast-items">
-              <div 
-                v-for="(item, index) in weatherData.forecast" 
+              <div
+                v-for="(item, index) in weatherData.forecast"
                 :key="index"
                 class="forecast-item"
               >
@@ -148,13 +148,13 @@
             </div>
           </div>
         </div>
-        
+
         <div class="weather-empty" v-else>
           请输入城市名查询天气
         </div>
       </div>
     </div>
-    
+
     <!-- 待办事项界面 -->
     <div class="live2d-todo-panel" v-if="showTodo">
       <div class="panel-header">
@@ -163,18 +163,18 @@
       </div>
       <div class="panel-body">
         <div class="todo-input">
-          <input 
-            type="text" 
-            v-model="newTodoText" 
-            placeholder="添加新的待办事项..." 
+          <input
+            v-model="newTodoText"
+            placeholder="添加新的待办事项..."
+            type="text"
             @keyup.enter="addTodoItem"
           />
           <button @click="addTodoItem">添加</button>
         </div>
-        
+
         <div class="todo-list">
-          <div 
-            v-for="item in todoItems" 
+          <div
+            v-for="item in todoItems"
             :key="item.id"
             class="todo-item"
             :class="{ 'completed': item.completed }"
@@ -186,19 +186,19 @@
             <div class="todo-delete" @click="deleteTodoItem(item.id)">×</div>
           </div>
         </div>
-        
+
         <div class="todo-empty" v-if="todoItems.length === 0">
           暂无待办事项
         </div>
       </div>
     </div>
-    
+
     <audio ref="audioPlayer" class="audio-player" @timeupdate="updateProgress" @ended="songEnded"></audio>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, defineEmits, defineProps, nextTick, watch } from 'vue';
+import {defineEmits, defineProps, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import axios from 'axios';
 import 'aplayer/dist/APlayer.min.css';
 import APlayer from 'aplayer';
@@ -302,13 +302,17 @@ const aplayer = ref<any>(null);
 const initLive2DWidget = (): void => {
   try {
     console.log('开始加载Live2D...');
-    
+
     // 创建script元素
     const script = document.createElement('script');
     script.src = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/autoload.js';
-    
+
     // 设置全局变量配置 - 保留原始工具栏
-    window.live2d_path = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/';
+    // 防止重复声明，先检查window.live2d_path是否已存在
+    if (typeof window.live2d_path === 'undefined') {
+      window.live2d_path = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/';
+    }
+
     window.live2d_settings = {
       modelId: 6,                // 设置默认模型为haruto
       modelTexturesId: 0,        // 默认材质ID
@@ -324,7 +328,7 @@ const initLive2DWidget = (): void => {
       homePageUrl: window.location.origin + '/',  // 设置正确的主页链接
       // 保留原始工具栏并启用
       showToolMenu: true,        // 显示工具栏
-      canCloseLive2d: false,     // 隐藏关闭按钮  
+      canCloseLive2d: false,     // 隐藏关闭按钮
       canSwitchModel: false,     // 隐藏原始模型切换
       canSwitchTextures: false,  // 关闭材质切换
       canSwitchHitokoto: false,  // 关闭一言切换
@@ -335,12 +339,12 @@ const initLive2DWidget = (): void => {
       tipsMessage: 'waifu-tips.json',         // 同目录下可省略路径
       hitokotoAPI: 'hitokoto.cn'              // 一言API
     } as any; // 使用类型断言解决TS类型问题
-    
+
     // 添加到文档
     document.body.appendChild(script);
-    
+
     console.log('Live2D脚本加载成功');
-    
+
     // 等待Live2D加载完成后修改原始工具栏
     const setupInterval = setInterval(() => {
       const waifuTool = document.querySelector('#waifu-tool');
@@ -352,7 +356,7 @@ const initLive2DWidget = (): void => {
         loadAPlayerScripts(); // 加载APlayer相关脚本
       }
     }, 500);
-    
+
     // 最多等待10秒
     setTimeout(() => {
       clearInterval(setupInterval);
@@ -366,29 +370,29 @@ const initLive2DWidget = (): void => {
 // export { initLive2DWidget };
 
 // 使用defineExpose暴露函数
-defineExpose({ 
-  initLive2DWidget 
+defineExpose({
+  initLive2DWidget
 });
 
 // 加载APlayer所需的模块
 const loadAPlayerScripts = (): void => {
   console.log('APlayer模块已通过npm包导入，无需动态加载脚本');
-  
+
   // 动态加载Meting.js (npm包中可能不包含完整功能)
   if (!document.querySelector('script[src*="Meting.min.js"]')) {
     const script = document.createElement('script');
     // 尝试直接从官方CDN加载最新版本
     script.src = 'https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js';
     document.body.appendChild(script);
-    
+
     script.onload = () => {
       console.log('Meting.js脚本加载完成');
       showMusicError.value = false;
-      
+
       // 自定义元素可能未注册，手动注册
       if (!customElements.get('meting-js')) {
         console.log('尝试手动注册meting-js元素');
-        
+
         // 等待一定时间，确保可能的函数已准备好
         setTimeout(() => {
           try {
@@ -404,12 +408,12 @@ const loadAPlayerScripts = (): void => {
         }, 500);
       }
     };
-    
+
     script.onerror = () => {
       console.error('加载Meting.js脚本失败');
       // 显示错误状态，允许用户手动更新歌单ID
       showMusicError.value = true;
-      
+
       // 尝试其他CDN源
       const alternativeScript = document.createElement('script');
       alternativeScript.src = 'https://unpkg.com/meting@2.0.1/dist/Meting.min.js';
@@ -427,7 +431,7 @@ const removeCustomToolbar = (): void => {
       console.log('找到并移除自定义工具栏');
       customToolbar.parentNode.removeChild(customToolbar);
     }
-    
+
     // 隐藏原始工具栏的按钮
     const originalButtons = document.querySelectorAll('#waifu-tool > span:not([data-action])');
     originalButtons.forEach(btn => {
@@ -449,12 +453,12 @@ const customizeOriginalToolbar = (): void => {
       console.error('未找到Live2D工具栏');
       return;
     }
-    
+
     // 移除所有现有按钮
     while (waifuTool.firstChild) {
       waifuTool.removeChild(waifuTool.firstChild);
     }
-    
+
     // 添加切换模型按钮
     const switchModelBtn = document.createElement('span');
     switchModelBtn.innerHTML = '👚';
@@ -464,37 +468,37 @@ const customizeOriginalToolbar = (): void => {
       console.log('点击切换模型按钮');
       e.preventDefault();
       e.stopPropagation();
-      
+
       const loadlive2d = (window as any).loadlive2d;
       const models = [
         { id: 1, name: 'shizuku', url: 'https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json' },
-        { id: 2, name: 'z16', url: 'https://unpkg.com/live2d-widget-model-z16@1.0.5/assets/z16.model.json' }, 
+        { id: 2, name: 'z16', url: 'https://unpkg.com/live2d-widget-model-z16@1.0.5/assets/z16.model.json' },
         { id: 3, name: 'koharu', url: 'https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json' },
         { id: 4, name: 'haruto', url: 'https://unpkg.com/live2d-widget-model-haruto@1.0.5/assets/haruto.model.json' },
         { id: 5, name: 'hijiki', url: 'https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json' },
         { id: 6, name: 'tororo', url: 'https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json' }
       ];
-      
+
       // 随机选择一个不同的模型
       let randomIndex = Math.floor(Math.random() * models.length);
       const currentId = window.live2d_settings?.modelId || 0;
-      
+
       // 尝试最多6次获取不同的模型
       for (let i = 0; i < 6; i++) {
         if (models[randomIndex].id !== currentId) break;
         randomIndex = Math.floor(Math.random() * models.length);
       }
-      
+
       const model = models[randomIndex];
       if (typeof loadlive2d === 'function') {
         console.log(`切换到模型: ${model.name}`);
         loadlive2d('live2d', model.url);
-        
+
         // 更新当前模型ID
         if (window.live2d_settings) {
           window.live2d_settings.modelId = model.id;
         }
-        
+
         // 显示提示消息
         showMessage(`模型已切换为 ${model.name}`);
       } else {
@@ -502,7 +506,7 @@ const customizeOriginalToolbar = (): void => {
       }
       return false;
     };
-    
+
     // 添加AI聊天按钮
     const chatBtn = document.createElement('span');
     chatBtn.innerHTML = '💬';
@@ -515,7 +519,7 @@ const customizeOriginalToolbar = (): void => {
       openChat();
       return false;
     };
-    
+
     // 添加音乐按钮
     const musicBtn = document.createElement('span');
     musicBtn.innerHTML = '🎵';
@@ -528,10 +532,10 @@ const customizeOriginalToolbar = (): void => {
       openMusic();
       return false;
     };
-    
-    // 添加天气按钮
+
+    // 添加天气按钮 - 修复错误的天气图标
     const weatherBtn = document.createElement('span');
-    weatherBtn.innerHTML = '��️';
+    weatherBtn.innerHTML = '🌤️';  // 修改为正确的天气图标
     weatherBtn.title = '天气查询';
     weatherBtn.setAttribute('data-action', 'weather');
     weatherBtn.onclick = (e: MouseEvent) => {
@@ -541,7 +545,7 @@ const customizeOriginalToolbar = (): void => {
       openWeather();
       return false;
     };
-    
+
     // 添加翻译按钮
     const translateBtn = document.createElement('span');
     translateBtn.innerHTML = '🌐';
@@ -554,7 +558,7 @@ const customizeOriginalToolbar = (): void => {
       openTranslator();
       return false;
     };
-    
+
     // 添加待办事项按钮
     const todoBtn = document.createElement('span');
     todoBtn.innerHTML = '📝';
@@ -567,7 +571,7 @@ const customizeOriginalToolbar = (): void => {
       openTodoList();
       return false;
     };
-    
+
     // 添加到工具栏
     waifuTool.appendChild(switchModelBtn);
     waifuTool.appendChild(chatBtn);
@@ -575,7 +579,7 @@ const customizeOriginalToolbar = (): void => {
     waifuTool.appendChild(weatherBtn);
     waifuTool.appendChild(translateBtn);
     waifuTool.appendChild(todoBtn);
-    
+
     // 设置按钮样式
     const buttons = waifuTool.querySelectorAll('span');
     buttons.forEach(btn => {
@@ -590,25 +594,25 @@ const customizeOriginalToolbar = (): void => {
         z-index: 10010 !important;
         user-select: none !important;
       `;
-      
+
       btn.addEventListener('mouseenter', () => {
         (btn as HTMLElement).style.transform = 'scale(1.2)';
         (btn as HTMLElement).style.opacity = '1';
       });
-      
+
       btn.addEventListener('mouseleave', () => {
         (btn as HTMLElement).style.transform = 'scale(1)';
         (btn as HTMLElement).style.opacity = '0.8';
       });
     });
-    
+
     // 修改工具栏整体样式
     (waifuTool as HTMLElement).style.cssText += `
-      z-index: 10010 !important; 
+      z-index: 10010 !important;
       visibility: visible !important;
       opacity: 1 !important;
     `;
-    
+
     console.log('Live2D工具栏修改成功');
   } catch (error) {
     console.error('修改工具栏失败:', error);
@@ -635,14 +639,14 @@ const openMusic = (): void => {
   showTranslator.value = false;
   showWeather.value = false;
   showTodo.value = false;
-  
+
   // 确保音乐面板可见
   setTimeout(() => {
     const musicPanel = document.querySelector('.live2d-music-panel');
     if (musicPanel) {
       (musicPanel as HTMLElement).style.display = 'flex';
       console.log('设置音乐面板为可见');
-      
+
       // 如果还没有创建APlayer实例，则创建
       if (!aplayer.value) {
         createAPlayer();
@@ -651,7 +655,7 @@ const openMusic = (): void => {
       }
     } else {
       console.log('找不到音乐面板元素');
-      
+
       // 尝试创建音乐面板
       const waifu = document.querySelector('#waifu');
       if (waifu) {
@@ -667,9 +671,9 @@ const openMusic = (): void => {
             <!-- APlayer将在这里挂载 -->
           </div>
         `;
-        
+
         document.body.appendChild(musicPanelDiv);
-        
+
         // 设置关闭按钮事件
         const closeBtn = document.getElementById('close-music-btn');
         if (closeBtn) {
@@ -678,7 +682,7 @@ const openMusic = (): void => {
             musicPanelDiv.style.display = 'none';
           });
         }
-        
+
         // 设置样式
         musicPanelDiv.style.display = 'flex';
         musicPanelDiv.style.flexDirection = 'column';
@@ -691,7 +695,7 @@ const openMusic = (): void => {
         musicPanelDiv.style.borderRadius = '20px';
         musicPanelDiv.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.15)';
         musicPanelDiv.style.zIndex = '1002';
-        
+
         // 设置面板头部样式
         const panelHeader = musicPanelDiv.querySelector('.panel-header');
         if (panelHeader) {
@@ -705,7 +709,7 @@ const openMusic = (): void => {
           (panelHeader as HTMLElement).style.borderTopLeftRadius = '20px';
           (panelHeader as HTMLElement).style.borderTopRightRadius = '20px';
         }
-        
+
         // 设置面板标题样式
         const panelTitle = musicPanelDiv.querySelector('.panel-header h3');
         if (panelTitle) {
@@ -714,7 +718,7 @@ const openMusic = (): void => {
           (panelTitle as HTMLElement).style.fontWeight = '600';
           (panelTitle as HTMLElement).style.color = 'white';
         }
-        
+
         // 设置关闭按钮样式
         const closeBtnElem = musicPanelDiv.querySelector('.close-btn');
         if (closeBtnElem) {
@@ -725,14 +729,14 @@ const openMusic = (): void => {
           (closeBtnElem as HTMLElement).style.cursor = 'pointer';
           (closeBtnElem as HTMLElement).style.transition = 'color 0.2s ease';
         }
-        
+
         // 设置面板内容部分样式
         const panelBody = musicPanelDiv.querySelector('.panel-body');
         if (panelBody) {
           (panelBody as HTMLElement).style.flex = '1';
           (panelBody as HTMLElement).style.overflow = 'hidden';
         }
-        
+
         // 使用新创建的面板
         aplayerContainer.value = document.getElementById('aplayer-container') as HTMLElement;
         createAPlayer();
@@ -746,35 +750,35 @@ const openMusic = (): void => {
 // 创建APlayer播放器
 const createAPlayer = async (): Promise<void> => {
   if (!aplayerContainer.value) return;
-  
+
   console.log('创建APlayer播放器');
-  
+
   // 如果已经存在实例，先销毁
   if (aplayer.value) {
     console.log('销毁已存在的APlayer实例');
     aplayer.value.destroy();
     aplayer.value = null;
   }
-  
+
   // 清空容器
   aplayerContainer.value.innerHTML = '';
-  
+
   try {
     // 从网易云获取歌单数据
     console.log('正在获取歌单数据，ID:', playlistId.value);
-    
+
     // 加载提示
     aplayerContainer.value.innerHTML = '<div class="loading-music">正在加载歌单数据...</div>';
-    
+
     // 获取网易云歌单数据
     const songList = await fetchNeteaseSongs(playlistId.value);
-    
+
     if (songList && songList.length > 0) {
       console.log(`成功获取${songList.length}首歌曲`);
-      
+
       // 清空加载提示
       aplayerContainer.value.innerHTML = '';
-      
+
       // 创建APlayer实例
       aplayer.value = new APlayer({
         container: aplayerContainer.value,
@@ -786,33 +790,33 @@ const createAPlayer = async (): Promise<void> => {
         listMaxHeight: '320px',
         order: 'random'
       });
-      
+
       console.log('APlayer实例创建成功');
     } else {
       throw new Error('无法获取歌曲数据');
     }
   } catch (error) {
     console.error('创建APlayer实例失败:', error);
-    
+
     // 显示错误信息
     aplayerContainer.value.innerHTML = `
       <div class="music-error">
         <p>无法加载歌单数据，请尝试更换歌单ID</p>
         <div class="music-input">
-          <input 
-            type="text" 
+          <input
+            type="text"
             id="newPlaylistId"
-            placeholder="输入网易云歌单ID..." 
+            placeholder="输入网易云歌单ID..."
           />
           <button id="changePlaylistBtn">更新</button>
         </div>
       </div>
     `;
-    
+
     // 添加事件监听
     const input = document.getElementById('newPlaylistId');
     const button = document.getElementById('changePlaylistBtn');
-    
+
     if (button && input) {
       button.addEventListener('click', () => {
         const newId = (input as HTMLInputElement).value.trim();
@@ -830,7 +834,7 @@ const fetchNeteaseSongs = async (id: string): Promise<Array<{name: string, artis
   try {
     // 使用公共网易云API
     const response = await axios.get(`https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${id}`);
-    
+
     if (response.data && Array.isArray(response.data)) {
       return response.data.map((song: any) => ({
         name: song.title || '未知歌曲',
@@ -840,7 +844,7 @@ const fetchNeteaseSongs = async (id: string): Promise<Array<{name: string, artis
         lrc: song.lrc || ''
       }));
     }
-    
+
     // 备用方法：如果上述API失败，使用直接链接（可能需要跨域处理）
     return [
       {
@@ -858,7 +862,7 @@ const fetchNeteaseSongs = async (id: string): Promise<Array<{name: string, artis
     ];
   } catch (error) {
     console.error('获取网易云歌单失败:', error);
-    
+
     // 返回备用歌曲
     return [
       {
@@ -882,7 +886,7 @@ const fetchNeteaseSongs = async (id: string): Promise<Array<{name: string, artis
   // 函数实现...
 }; */
 
-// 天气功能
+// 天气功能相关
 const openWeather = (): void => {
   console.log('执行openWeather函数');
   showWeather.value = true;
@@ -890,7 +894,7 @@ const openWeather = (): void => {
   showMusic.value = false;
   showTranslator.value = false;
   showTodo.value = false;
-  
+
   // 确保天气面板可见
   setTimeout(() => {
     const weatherPanel = document.querySelector('.live2d-weather-panel');
@@ -901,7 +905,7 @@ const openWeather = (): void => {
       console.log('找不到天气面板元素');
     }
   }, 50);
-  
+
   // 如果已获取地理位置权限，自动获取当前位置天气
   if (navigator.geolocation) {
     isLoadingWeather.value = true;
@@ -917,15 +921,16 @@ const openWeather = (): void => {
   }
 };
 
-// 根据坐标获取天气 - 使用参数但不需要在函数中再单独声明
+// 根据坐标获取天气
 const getWeatherByCoords = async (lat: number, lon: number): Promise<void> => {
+  isLoadingWeather.value = true;
+
   try {
-    // 这里应该调用实际的天气API，这里使用模拟数据，并传递但不单独存储坐标参数
+    // 这里应该调用实际的天气API，这里使用模拟数据
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 可以在这里使用lat和lon参数调用实际的天气API
+
     console.log(`获取坐标(${lat}, ${lon})的天气数据`);
-    
+
     weatherData.value = {
       city: '当前位置',
       temperature: Math.floor(15 + Math.random() * 15), // 15-30度之间
@@ -945,6 +950,89 @@ const getWeatherByCoords = async (lat: number, lon: number): Promise<void> => {
   }
 };
 
+// 聊天功能
+const openChat = (): void => {
+  console.log('执行openChat函数');
+  showChat.value = true;
+  showMusic.value = false;
+  showTranslator.value = false;
+  showWeather.value = false;
+  showTodo.value = false;
+
+  // 确保聊天面板可见
+  setTimeout(() => {
+    const chatPanel = document.querySelector('.live2d-chat-panel');
+    if (chatPanel) {
+      (chatPanel as HTMLElement).style.display = 'flex';
+      console.log('设置聊天面板为可见');
+    } else {
+      console.log('找不到聊天面板元素');
+    }
+  }, 50);
+};
+
+// 发送消息
+const sendMessage = (): void => {
+  if (!userInput.value.trim() || isLoading.value) return;
+
+  // 添加用户消息
+  chatMessages.value.push({
+    role: 'user',
+    content: userInput.value,
+    time: new Date().toLocaleTimeString()
+  });
+
+  // 清空输入框
+  const input = userInput.value;
+  userInput.value = '';
+
+  // 设置加载状态
+  isLoading.value = true;
+
+  // 滚动到底部
+  nextTick(() => {
+    if (chatContainer.value) {
+      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    }
+  });
+
+  // 模拟AI回复
+  setTimeout(() => {
+    // 简单的回复逻辑
+    let reply = '';
+    if (input.includes('你好') || input.includes('hello') || input.includes('hi')) {
+      reply = '你好！有什么我能帮到你的吗？';
+    } else if (input.includes('天气')) {
+      reply = '我可以帮你查询天气，请点击工具栏中的天气图标。';
+    } else if (input.includes('音乐')) {
+      reply = '我可以为你播放音乐，请点击工具栏中的音乐图标。';
+    } else if (input.includes('翻译')) {
+      reply = '我可以帮你翻译文本，请点击工具栏中的翻译图标。';
+    } else if (input.includes('待办') || input.includes('todo')) {
+      reply = '我可以帮你管理待办事项，请点击工具栏中的待办事项图标。';
+    } else {
+      reply = '我是一个简单的AI助手，目前功能有限。你可以使用我的工具栏来体验更多功能。';
+    }
+
+    // 添加AI回复
+    chatMessages.value.push({
+      role: 'assistant',
+      content: reply,
+      time: new Date().toLocaleTimeString()
+    });
+
+    // 取消加载状态
+    isLoading.value = false;
+
+    // 滚动到底部
+    nextTick(() => {
+      if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+      }
+    });
+  }, 1000);
+};
+
 // 待办事项功能
 const openTodoList = (): void => {
   console.log('执行openTodoList函数');
@@ -953,7 +1041,7 @@ const openTodoList = (): void => {
   showMusic.value = false;
   showTranslator.value = false;
   showWeather.value = false;
-  
+
   // 确保待办事项面板可见
   setTimeout(() => {
     const todoPanel = document.querySelector('.live2d-todo-panel');
@@ -964,7 +1052,7 @@ const openTodoList = (): void => {
       console.log('找不到待办事项面板元素');
     }
   }, 50);
-  
+
   // 加载待办事项
   loadTodoItems();
 };
@@ -990,15 +1078,15 @@ const saveTodoItems = (): void => {
 // 添加待办事项
 const addTodoItem = (): void => {
   if (!newTodoText.value.trim()) return;
-  
+
   const newId = todoItems.value.length ? Math.max(...todoItems.value.map(item => item.id)) + 1 : 1;
-  
+
   todoItems.value.push({
     id: newId,
     text: newTodoText.value,
     completed: false
   });
-  
+
   newTodoText.value = '';
   saveTodoItems();
 };
@@ -1021,7 +1109,7 @@ const deleteTodoItem = (id: number): void => {
 // 更新进度条
 const updateProgress = (): void => {
   if (!audioPlayer.value) return;
-  
+
   currentTime.value = audioPlayer.value.currentTime;
   duration.value = audioPlayer.value.duration || 0;
 };
@@ -1030,7 +1118,7 @@ const updateProgress = (): void => {
 const songEnded = (): void => {
   isPlaying.value = false;
   currentTime.value = 0;
-  
+
   // 可以在这里实现自动播放下一首
 };
 
@@ -1050,10 +1138,10 @@ watch(() => window.location.pathname, () => {
 // 在路由变化或页面重载时重新应用工具栏修改
 const handleRouteChange = (): void => {
   console.log('路由变化，检查工具栏状态');
-  
+
   // 立即检查一次
   checkAndRestoreToolbar();
-  
+
   // 然后每500ms检查一次，最多检查10次
   let checkCount = 0;
   const checkInterval = setInterval(() => {
@@ -1062,7 +1150,7 @@ const handleRouteChange = (): void => {
       clearInterval(checkInterval);
       return;
     }
-    
+
     if (checkAndRestoreToolbar()) {
       clearInterval(checkInterval);
     }
@@ -1076,7 +1164,7 @@ const checkAndRestoreToolbar = (): boolean => {
     console.log('工具栏不存在，等待加载');
     return false;
   }
-  
+
   const customButtons = waifuTool.querySelector('[data-action="ai-chat"]');
   if (!customButtons) {
     console.log('检测到工具栏重置，重新应用自定义按钮');
@@ -1084,7 +1172,7 @@ const checkAndRestoreToolbar = (): boolean => {
     customizeOriginalToolbar();
     return true;
   }
-  
+
   return true;
 };
 
@@ -1096,7 +1184,7 @@ const openTranslator = (): void => {
   showMusic.value = false;
   showWeather.value = false;
   showTodo.value = false;
-  
+
   // 确保翻译面板可见
   setTimeout(() => {
     const translatorPanel = document.querySelector('.live2d-translator-panel');
@@ -1112,13 +1200,13 @@ const openTranslator = (): void => {
 // 执行翻译
 const translateText = async (): Promise<void> => {
   if (!sourceText.value.trim() || isTranslating.value) return;
-  
+
   isTranslating.value = true;
-  
+
   try {
     // 这里应该调用实际的翻译API，这里使用模拟响应
     await new Promise(resolve => setTimeout(resolve, 800));
-    
+
     // 模拟翻译
     if (targetLang.value === 'en') {
       // 中译英模拟
@@ -1130,8 +1218,8 @@ const translateText = async (): Promise<void> => {
         '我爱你': 'I love you',
         '再见': 'Goodbye'
       };
-      
-      translatedText.value = translations[sourceText.value] || 
+
+      translatedText.value = translations[sourceText.value] ||
         `[En] ${sourceText.value} (Simulated translation)`;
     } else {
       // 英译中模拟
@@ -1143,8 +1231,8 @@ const translateText = async (): Promise<void> => {
         'i love you': '我爱你',
         'goodbye': '再见'
       };
-      
-      translatedText.value = translations[sourceText.value.toLowerCase()] || 
+
+      translatedText.value = translations[sourceText.value.toLowerCase()] ||
         `[中] ${sourceText.value} (模拟翻译)`;
     }
   } catch (error) {
@@ -1165,16 +1253,16 @@ onMounted(() => {
   setTimeout(() => {
   initLive2DWidget();
   }, 300);
-  
+
   // 监听点击事件，关闭面板
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
-    if (!target.closest('.live2d-chat-panel') && 
-        !target.closest('.live2d-music-panel') && 
-        !target.closest('.live2d-translator-panel') && 
-        !target.closest('.live2d-weather-panel') && 
-        !target.closest('.live2d-todo-panel') && 
-        !target.closest('#waifu-tool') && 
+    if (!target.closest('.live2d-chat-panel') &&
+        !target.closest('.live2d-music-panel') &&
+        !target.closest('.live2d-translator-panel') &&
+        !target.closest('.live2d-weather-panel') &&
+        !target.closest('.live2d-todo-panel') &&
+        !target.closest('#waifu-tool') &&
         !target.closest('#waifu-tips')) {
       // 只有点击在面板和工具栏之外时才关闭
       showChat.value = false;
@@ -1184,10 +1272,10 @@ onMounted(() => {
       showTodo.value = false;
     }
   });
-  
+
   // 设置音频播放器引用
   audioPlayer.value = document.querySelector('.audio-player');
-  
+
   // 添加MutationObserver来监视DOM变化
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -1196,7 +1284,7 @@ onMounted(() => {
         const waifuAdded = Array.from(mutation.addedNodes).some(
           node => (node as Element).id === 'waifu' || (node as Element).querySelector?.('#waifu')
         );
-        
+
         if (waifuAdded) {
           console.log('检测到Live2D元素被添加，初始化工具栏');
           setTimeout(() => {
@@ -1207,33 +1295,33 @@ onMounted(() => {
       }
     });
   });
-  
+
   // 开始监视document.body的变化
   observer.observe(document.body, { childList: true, subtree: true });
-  
+
   // 监听URL变化（不依赖路由）
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
-  
+
   history.pushState = function() {
     const result = originalPushState.apply(this, arguments as any);
     console.log('历史状态变化 (pushState)');
     handleRouteChange();
     return result;
   };
-  
+
   history.replaceState = function() {
     const result = originalReplaceState.apply(this, arguments as any);
     console.log('历史状态变化 (replaceState)');
     handleRouteChange();
     return result;
   };
-  
+
   window.addEventListener('popstate', () => {
     console.log('历史状态变化 (popstate)');
     handleRouteChange();
   });
-  
+
   // 页面加载完成后再次检查
   window.addEventListener('load', () => {
     console.log('页面加载完成，检查工具栏');
@@ -1244,13 +1332,57 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // 清理事件监听器和观察者
   window.removeEventListener('popstate', handleRouteChange);
-  
+
   // 恢复原始的history方法
   if (history.pushState.toString().includes('handleRouteChange')) {
     history.pushState = window.history.pushState;
     history.replaceState = window.history.replaceState;
   }
 });
+
+// 根据城市名称获取天气
+const getWeatherByCity = async (): Promise<void> => {
+  if (!weatherCity.value.trim() || isLoadingWeather.value) return;
+
+  isLoadingWeather.value = true;
+
+  try {
+    // 这里是模拟数据，实际应调用天气API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    weatherData.value = {
+      city: weatherCity.value,
+      temperature: Math.floor(15 + Math.random() * 15),
+      condition: ['晴朗', '多云', '小雨', '阴天'][Math.floor(Math.random() * 4)],
+      humidity: Math.floor(40 + Math.random() * 40),
+      wind: Math.floor(1 + Math.random() * 9),
+      forecast: [
+        {
+          day: '今天',
+          high: Math.floor(20 + Math.random() * 10),
+          low: Math.floor(10 + Math.random() * 10),
+          condition: '晴'
+        },
+        {
+          day: '明天',
+          high: Math.floor(20 + Math.random() * 10),
+          low: Math.floor(10 + Math.random() * 10),
+          condition: '多云'
+        },
+        {
+          day: '后天',
+          high: Math.floor(20 + Math.random() * 10),
+          low: Math.floor(10 + Math.random() * 10),
+          condition: '小雨'
+        }
+      ]
+    };
+  } catch (error) {
+    console.error('获取天气失败:', error);
+  } finally {
+    isLoadingWeather.value = false;
+  }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -1262,26 +1394,26 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  
+
   &.chat-open, &.music-open, &.translator-open, &.weather-open, &.todo-open {
     #live2d-widget {
       transform: translateX(-40px) scale(0.8);
       transition: transform 0.3s ease;
     }
   }
-  
+
   #live2d-widget {
     position: relative;
     cursor: pointer;
     transition: transform 0.3s ease;
-    
+
     canvas {
       position: absolute;
       left: 0;
       top: 0;
     }
   }
-  
+
   .live2d-speech-bubble {
     position: absolute;
     top: -60px;
@@ -1290,7 +1422,7 @@ onBeforeUnmount(() => {
     animation: floatBubble 2s infinite alternate;
     pointer-events: none;
     z-index: 1001;
-    
+
     .bubble-content {
       background-color: #fff;
       padding: 12px 16px;
@@ -1298,7 +1430,7 @@ onBeforeUnmount(() => {
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
       font-size: 14px;
       position: relative;
-      
+
       &:after {
         content: '';
         position: absolute;
@@ -1312,7 +1444,7 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   .live2d-menu {
     position: absolute;
     bottom: 250px;
@@ -1325,7 +1457,7 @@ onBeforeUnmount(() => {
     animation: fadeIn 0.3s ease;
     overflow: hidden;
     z-index: 1001;
-    
+
     .menu-item {
       padding: 12px 18px;
       font-size: 14px;
@@ -1333,23 +1465,23 @@ onBeforeUnmount(() => {
       display: flex;
       align-items: center;
       transition: all 0.2s ease;
-      
+
       &:hover {
         background-color: #f0f7ff;
         transform: translateX(5px);
       }
-      
+
       .menu-icon {
         font-size: 18px;
         margin-right: 12px;
       }
-      
+
       .menu-text {
         font-weight: 500;
       }
     }
   }
-  
+
   // AI聊天面板样式
   .live2d-chat-panel {
     position: absolute;
@@ -1365,7 +1497,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     animation: slideIn 0.3s ease;
     z-index: 1002;
-    
+
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -1373,14 +1505,14 @@ onBeforeUnmount(() => {
       padding: 15px 20px;
       background-color: #f8f9fb;
       border-bottom: 1px solid #eaeaea;
-      
+
       h3 {
         margin: 0;
         font-size: 16px;
         font-weight: 600;
         color: #333;
       }
-      
+
       .close-btn {
         background: none;
         border: none;
@@ -1388,59 +1520,59 @@ onBeforeUnmount(() => {
         color: #aaa;
         cursor: pointer;
         transition: color 0.2s ease;
-        
+
         &:hover {
           color: #666;
         }
       }
     }
-    
+
     .panel-body {
       flex: 1;
       overflow-y: auto;
       padding: 15px;
       background-color: #f5f7fa;
-      
+
       &::-webkit-scrollbar {
         width: 4px;
       }
-      
+
       &::-webkit-scrollbar-track {
         background: transparent;
       }
-      
+
       &::-webkit-scrollbar-thumb {
         background-color: rgba(0, 0, 0, 0.1);
         border-radius: 2px;
       }
-      
+
       .chat-messages {
         display: flex;
         flex-direction: column;
         gap: 15px;
-        
+
         .message {
           display: flex;
           max-width: 85%;
-          
+
           &.user {
             align-self: flex-end;
             flex-direction: row-reverse;
-            
+
             .message-content {
               background-color: #dcf8c6;
               border-radius: 18px 4px 18px 18px;
               margin-right: 10px;
             }
-            
+
             .message-time {
               text-align: right;
             }
           }
-          
+
           &.assistant {
             align-self: flex-start;
-            
+
             .message-content {
               background-color: #fff;
               border-radius: 4px 18px 18px 18px;
@@ -1448,12 +1580,12 @@ onBeforeUnmount(() => {
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             }
           }
-          
+
           .message-avatar {
             width: 36px;
             height: 36px;
             flex-shrink: 0;
-            
+
             .avatar-img {
               width: 100%;
               height: 100%;
@@ -1464,26 +1596,26 @@ onBeforeUnmount(() => {
               font-size: 20px;
               background-color: #f0f0f0;
             }
-            
+
             .ai-avatar {
               background-color: #e6f7ff;
             }
-            
+
             .user-avatar {
               background-color: #f0f7e6;
             }
           }
-          
+
           .message-content {
             padding: 10px 15px;
             border-radius: 18px;
-            
+
             .message-text {
               font-size: 14px;
               line-height: 1.5;
               word-break: break-word;
             }
-            
+
             .message-time {
               font-size: 11px;
               color: #999;
@@ -1493,14 +1625,14 @@ onBeforeUnmount(() => {
         }
       }
     }
-    
+
     .panel-footer {
       display: flex;
       align-items: center;
       padding: 10px 15px;
       background-color: #fff;
       border-top: 1px solid #eaeaea;
-      
+
       .chat-input {
         flex: 1;
         border: 1px solid #ddd;
@@ -1509,13 +1641,13 @@ onBeforeUnmount(() => {
         font-size: 14px;
         outline: none;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        
+
         &:focus {
           border-color: #4f9bff;
           box-shadow: 0 0 0 2px rgba(79, 155, 255, 0.1);
         }
       }
-      
+
       .send-btn {
         background-color: #4f9bff;
         color: white;
@@ -1529,12 +1661,12 @@ onBeforeUnmount(() => {
         align-items: center;
         justify-content: center;
         transition: background-color 0.2s ease, transform 0.2s ease;
-        
+
         &:hover {
           background-color: #3d86e8;
           transform: scale(1.05);
         }
-        
+
         &:disabled {
           background-color: #b0ccf5;
           cursor: not-allowed;
@@ -1543,7 +1675,7 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   // 音乐播放面板样式
   .live2d-music-panel {
     position: absolute;
@@ -1559,7 +1691,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     animation: slideIn 0.3s ease;
     z-index: 1002;
-    
+
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -1568,13 +1700,13 @@ onBeforeUnmount(() => {
       background-color: #f06292;
       border-bottom: 1px solid #e9446a;
       color: white;
-      
+
       h3 {
         margin: 0;
         font-size: 16px;
         font-weight: 600;
       }
-      
+
       .close-btn {
         background: none;
         border: none;
@@ -1582,19 +1714,19 @@ onBeforeUnmount(() => {
         color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
         transition: color 0.2s ease;
-        
+
         &:hover {
           color: white;
         }
       }
     }
-    
+
     .panel-body {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      
+
       .loading-music {
         display: flex;
         justify-content: center;
@@ -1604,7 +1736,7 @@ onBeforeUnmount(() => {
         font-size: 14px;
         text-align: center;
         padding: 30px;
-        
+
         &:after {
           content: '';
           display: inline-block;
@@ -1617,7 +1749,7 @@ onBeforeUnmount(() => {
           animation: spin 1s linear infinite;
         }
       }
-      
+
       .music-error {
         display: flex;
         flex-direction: column;
@@ -1626,18 +1758,18 @@ onBeforeUnmount(() => {
         padding: 30px 20px;
         height: 100%;
         text-align: center;
-        
+
         p {
           margin-bottom: 20px;
           color: #f06292;
           font-size: 14px;
         }
-        
+
         .music-input {
           display: flex;
           width: 100%;
           max-width: 260px;
-          
+
           input {
             flex: 1;
             border: 1px solid #ddd;
@@ -1645,12 +1777,12 @@ onBeforeUnmount(() => {
             padding: 8px 15px;
             font-size: 14px;
             outline: none;
-            
+
             &:focus {
               border-color: #f06292;
             }
           }
-          
+
           button {
             background-color: #f06292;
             color: white;
@@ -1659,7 +1791,7 @@ onBeforeUnmount(() => {
             padding: 0 15px;
             cursor: pointer;
             transition: all 0.2s ease;
-            
+
             &:hover {
               background-color: #e94976;
             }
@@ -1668,7 +1800,7 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   // 翻译助手面板样式
   .live2d-translator-panel {
     position: absolute;
@@ -1684,7 +1816,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     animation: slideIn 0.3s ease;
     z-index: 1002;
-    
+
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -1693,13 +1825,13 @@ onBeforeUnmount(() => {
       background-color: #4dabf7;
       border-bottom: 1px solid #339af0;
       color: white;
-      
+
       h3 {
         margin: 0;
         font-size: 16px;
         font-weight: 600;
       }
-      
+
       .close-btn {
         background: none;
         border: none;
@@ -1707,38 +1839,38 @@ onBeforeUnmount(() => {
         color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
         transition: color 0.2s ease;
-        
+
         &:hover {
           color: white;
         }
       }
     }
-    
+
     .panel-body {
       flex: 1;
       display: flex;
       flex-direction: column;
       padding: 15px;
       gap: 15px;
-      
+
       .translator-controls {
         .language-selector {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          
+
           select {
             flex: 1;
             padding: 8px;
             border-radius: 8px;
             border: 1px solid #ddd;
             outline: none;
-            
+
             &:focus {
               border-color: #4dabf7;
             }
           }
-          
+
           .direction-arrow {
             margin: 0 10px;
             font-weight: bold;
@@ -1746,10 +1878,10 @@ onBeforeUnmount(() => {
           }
         }
       }
-      
+
       .translator-input {
         flex: 1;
-        
+
         textarea {
           width: 100%;
           height: 100%;
@@ -1760,17 +1892,17 @@ onBeforeUnmount(() => {
           padding: 10px;
           font-size: 14px;
           outline: none;
-          
+
           &:focus {
             border-color: #4dabf7;
           }
         }
       }
-      
+
       .translator-actions {
         display: flex;
         justify-content: center;
-        
+
         .translate-btn {
           background-color: #4dabf7;
           color: white;
@@ -1780,12 +1912,12 @@ onBeforeUnmount(() => {
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s ease;
-          
+
           &:hover {
             background-color: #339af0;
             transform: translateY(-2px);
           }
-          
+
           &:disabled {
             background-color: #a5d8ff;
             cursor: not-allowed;
@@ -1793,18 +1925,18 @@ onBeforeUnmount(() => {
           }
         }
       }
-      
+
       .translator-result {
         background-color: #f8f9fa;
         border-radius: 8px;
         padding: 12px;
-        
+
         .result-label {
           font-size: 12px;
           color: #868e96;
           margin-bottom: 6px;
         }
-        
+
         .result-text {
           font-size: 14px;
           line-height: 1.5;
@@ -1813,7 +1945,7 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   // 天气面板样式
   .live2d-weather-panel {
     position: absolute;
@@ -1829,7 +1961,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     animation: slideIn 0.3s ease;
     z-index: 1002;
-    
+
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -1838,13 +1970,13 @@ onBeforeUnmount(() => {
       background-color: #51cf66;
       border-bottom: 1px solid #40c057;
       color: white;
-      
+
       h3 {
         margin: 0;
         font-size: 16px;
         font-weight: 600;
       }
-      
+
       .close-btn {
         background: none;
         border: none;
@@ -1852,23 +1984,23 @@ onBeforeUnmount(() => {
         color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
         transition: color 0.2s ease;
-        
+
         &:hover {
           color: white;
         }
       }
     }
-    
+
     .panel-body {
       flex: 1;
       display: flex;
       flex-direction: column;
       padding: 15px;
-      
+
       .weather-search {
         display: flex;
         margin-bottom: 15px;
-        
+
         input {
           flex: 1;
           border: 1px solid #ddd;
@@ -1876,13 +2008,13 @@ onBeforeUnmount(() => {
           padding: 8px 15px;
           font-size: 14px;
           outline: none;
-          
+
           &:focus {
             border-color: #51cf66;
             box-shadow: 0 0 0 2px rgba(81, 207, 102, 0.1);
           }
         }
-        
+
         button {
           background-color: #51cf66;
           color: white;
@@ -1896,12 +2028,12 @@ onBeforeUnmount(() => {
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
-          
+
           &:hover {
             background-color: #40c057;
             transform: scale(1.05);
           }
-          
+
           &:disabled {
             background-color: #b2f2bb;
             cursor: not-allowed;
@@ -1909,7 +2041,7 @@ onBeforeUnmount(() => {
           }
         }
       }
-      
+
       .weather-loading {
         display: flex;
         justify-content: center;
@@ -1918,38 +2050,38 @@ onBeforeUnmount(() => {
         color: #868e96;
         font-size: 14px;
       }
-      
+
       .weather-result {
         flex: 1;
         display: flex;
         flex-direction: column;
-        
+
         .weather-current {
           background-color: #f1f8e9;
           border-radius: 15px;
           padding: 20px;
           margin-bottom: 15px;
           text-align: center;
-          
+
           .weather-city {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 5px;
           }
-          
+
           .weather-temp {
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 5px;
             color: #2b8a3e;
           }
-          
+
           .weather-condition {
             font-size: 16px;
             color: #495057;
             margin-bottom: 10px;
           }
-          
+
           .weather-details {
             display: flex;
             justify-content: space-around;
@@ -1957,12 +2089,12 @@ onBeforeUnmount(() => {
             color: #868e96;
           }
         }
-        
+
         .weather-forecast {
           background-color: #f8f9fa;
           border-radius: 15px;
           padding: 15px;
-          
+
           .forecast-title {
             font-size: 16px;
             font-weight: 600;
@@ -1970,28 +2102,28 @@ onBeforeUnmount(() => {
             color: #495057;
             text-align: center;
           }
-          
+
           .forecast-items {
             display: flex;
             justify-content: space-between;
-            
+
             .forecast-item {
               flex: 1;
               text-align: center;
               padding: 10px 5px;
-              
+
               .forecast-day {
                 font-size: 14px;
                 font-weight: 500;
                 margin-bottom: 5px;
               }
-              
+
               .forecast-condition {
                 font-size: 12px;
                 color: #495057;
                 margin-bottom: 5px;
               }
-              
+
               .forecast-temp {
                 font-size: 12px;
                 color: #868e96;
@@ -2000,7 +2132,7 @@ onBeforeUnmount(() => {
           }
         }
       }
-      
+
       .weather-empty {
         display: flex;
         justify-content: center;
@@ -2011,7 +2143,7 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   // 待办事项面板样式
   .live2d-todo-panel {
     position: absolute;
@@ -2027,7 +2159,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     animation: slideIn 0.3s ease;
     z-index: 1002;
-    
+
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -2036,13 +2168,13 @@ onBeforeUnmount(() => {
       background-color: #fab005;
       border-bottom: 1px solid #f59f00;
       color: white;
-      
+
       h3 {
         margin: 0;
         font-size: 16px;
         font-weight: 600;
       }
-      
+
       .close-btn {
         background: none;
         border: none;
@@ -2050,23 +2182,23 @@ onBeforeUnmount(() => {
         color: rgba(255, 255, 255, 0.8);
         cursor: pointer;
         transition: color 0.2s ease;
-        
+
         &:hover {
           color: white;
         }
       }
     }
-    
+
     .panel-body {
       flex: 1;
       display: flex;
       flex-direction: column;
       padding: 15px;
-      
+
       .todo-input {
         display: flex;
         margin-bottom: 15px;
-        
+
         input {
           flex: 1;
           border: 1px solid #ddd;
@@ -2074,13 +2206,13 @@ onBeforeUnmount(() => {
           padding: 8px 15px;
           font-size: 14px;
           outline: none;
-          
+
           &:focus {
             border-color: #fab005;
             box-shadow: 0 0 0 2px rgba(250, 176, 5, 0.1);
           }
         }
-        
+
         button {
           background-color: #fab005;
           color: white;
@@ -2091,44 +2223,44 @@ onBeforeUnmount(() => {
           cursor: pointer;
           font-weight: 500;
           transition: all 0.2s ease;
-          
+
           &:hover {
             background-color: #f59f00;
             transform: translateY(-2px);
           }
         }
       }
-      
+
       .todo-list {
         flex: 1;
         overflow-y: auto;
-        
+
         &::-webkit-scrollbar {
           width: 4px;
         }
-        
+
         &::-webkit-scrollbar-track {
           background: transparent;
         }
-        
+
         &::-webkit-scrollbar-thumb {
           background-color: rgba(0, 0, 0, 0.1);
           border-radius: 2px;
         }
-        
+
         .todo-item {
           display: flex;
           align-items: center;
           padding: 10px;
           border-bottom: 1px solid #f1f3f5;
-          
+
           &.completed {
             .todo-text {
               text-decoration: line-through;
               color: #adb5bd;
             }
           }
-          
+
           .todo-checkbox {
             width: 20px;
             height: 20px;
@@ -2142,23 +2274,23 @@ onBeforeUnmount(() => {
             background-color: #fff;
             cursor: pointer;
             transition: all 0.2s ease;
-            
+
             &:hover {
               background-color: rgba(250, 176, 5, 0.1);
             }
           }
-          
+
           &.completed .todo-checkbox {
             background-color: #fab005;
           }
-          
+
           .todo-text {
             flex: 1;
             font-size: 14px;
             line-height: 1.5;
             word-break: break-word;
           }
-          
+
           .todo-delete {
             width: 20px;
             height: 20px;
@@ -2170,7 +2302,7 @@ onBeforeUnmount(() => {
             cursor: pointer;
             opacity: 0.5;
             transition: all 0.2s ease;
-            
+
             &:hover {
               opacity: 1;
               color: #fa5252;
@@ -2178,7 +2310,7 @@ onBeforeUnmount(() => {
           }
         }
       }
-      
+
       .todo-empty {
         display: flex;
         justify-content: center;
@@ -2231,17 +2363,17 @@ onBeforeUnmount(() => {
   .live2d-container {
     left: 10px;
     bottom: 10px;
-    
+
     .live2d-menu {
       width: 160px;
       bottom: 180px;
       left: 30px;
     }
-    
+
     .live2d-speech-bubble {
       left: 30px;
     }
-    
+
     .live2d-chat-panel,
     .live2d-music-panel,
     .live2d-translator-panel,
@@ -2253,4 +2385,4 @@ onBeforeUnmount(() => {
     }
   }
 }
-</style> 
+</style>

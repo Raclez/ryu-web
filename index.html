@@ -2,13 +2,46 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+    <meta content="#222222" name="theme-color">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
   <link rel="icon" href="/favicon.ico">
   <title>Ryu的博客</title>
   <meta name="description" content="Ryu的个人博客，分享前端和后端技术笔记">
+    <style>
+        /* 确保页眉在所有设备上背景透明 */
+        .header, .home-container .header {
+            background-color: transparent !important;
+        }
+
+        @media (max-width: 768px) {
+            /* 移动端特定修复 */
+            .header, .home-container .header {
+                background-color: transparent !important;
+            }
+
+            /* 移除卡片图片上的白色覆盖层 */
+            .blog-card .blog-thumbnail:before {
+                opacity: 0 !important;
+                background: none !important;
+            }
+
+            /* 移动端博客卡片布局优化 */
+            .blog-card {
+                flex-direction: column !important;
+                height: auto !important;
+            }
+
+            /* 修复卡片的奇偶布局 */
+            .blog-card:nth-child(even) {
+                flex-direction: column !important;
+            }
+        }
+    </style>
 </head>
 <body>
   <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
-</html> 
+</html>

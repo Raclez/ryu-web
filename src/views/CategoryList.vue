@@ -8,9 +8,9 @@
             <div class="dropdown">
               <span>分类</span>
               <div class="dropdown-content">
-                <router-link 
-                  v-for="category in categories" 
-                  :key="category.id" 
+                <router-link
+                  v-for="category in categories"
+                  :key="category.id"
                   :to="`/category/${category.name}`"
                 >
                   {{ category.name }}
@@ -18,13 +18,13 @@
               </div>
             </div>
           </div>
-          
+
           <div class="right-actions">
             <div class="search-container">
-              <input v-if="showSearchInput" 
-                type="text" 
-                class="search-input" 
-                placeholder="搜索..." 
+              <input v-if="showSearchInput"
+                type="text"
+                class="search-input"
+                placeholder="搜索..."
                 ref="searchInput"
                 v-model="searchQuery"
                 @keyup.enter="performSearch"
@@ -47,26 +47,26 @@
         </div>
       </div>
     </header>
-    
+
     <main class="main">
       <div class="container">
         <div v-if="loading" class="loading">
           <p>加载中...</p>
         </div>
-        
+
         <div v-else-if="error" class="error">
           <p>{{ error }}</p>
         </div>
-        
+
         <div v-else-if="blogs.length === 0" class="no-blogs">
           <p>该分类下暂无文章</p>
           <router-link to="/" class="home-link">返回首页</router-link>
         </div>
-        
+
         <div v-else class="blog-list">
-          <div 
-            v-for="blog in blogs" 
-            :key="blog.id" 
+          <div
+            v-for="blog in blogs"
+            :key="blog.id"
             class="blog-card"
             @click="navigateToBlog(blog.id)"
           >
@@ -86,7 +86,7 @@
         </div>
       </div>
     </main>
-    
+
     <footer class="footer">
       <div class="copyright">
         © {{ new Date().getFullYear() }} Ryu
@@ -102,11 +102,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useBlogStore } from '@/store';
-import type { Category } from '@/api/types';
-import type { BaseBlog } from '@/api/types';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {useBlogStore} from '@/store';
+import type {BaseBlog, Category} from '@/api/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -215,16 +214,16 @@ declare global {
 const loadData = async (): Promise<void> => {
   try {
     loading.value = true;
-    
+
     // 并行加载博客和分类
     await Promise.all([
       blogStore.fetchAllBlogs(),
       blogStore.fetchCategories()
     ]);
-    
+
     // 加载分类下的博客
     await fetchCategoryBlogs();
-    
+
     // 检查分类是否存在
     if (category.value && !currentCategory.value) {
       error.value = '找不到该分类';
@@ -242,7 +241,7 @@ watch(() => route.params.category, async () => {
   if (blogStore.blogs.length > 0 && blogStore.categories.length > 0) {
     // 如果数据已经加载，只需加载当前分类的博客
     await fetchCategoryBlogs();
-    
+
     // 检查分类是否存在
     if (category.value && !currentCategory.value) {
       error.value = '找不到该分类';
@@ -257,16 +256,18 @@ watch(() => route.params.category, async () => {
 
 onMounted(async () => {
   await loadData();
-  
+
   // 初始化Live2D
   nextTick(() => {
-    // 设置全局变量配置
-    window.live2d_path = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/';
-    
+    // 设置全局变量配置 - 检查是否已经存在
+    if (typeof window.live2d_path === 'undefined') {
+      window.live2d_path = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/';
+    }
+
     // 创建Live2D脚本
     const script = document.createElement('script');
     script.src = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/autoload.js';
-    
+
     // 设置模型路径
     window.live2d_settings = {
       modelId: 6,                // 设置默认模型为haruto
@@ -293,10 +294,10 @@ onMounted(async () => {
       tipsMessage: 'waifu-tips.json',         // 同目录下可省略路径
       hitokotoAPI: 'hitokoto.cn'              // 一言API
     } as any; // 使用类型断言解决TS类型问题
-    
+
     // 添加到文档
     document.body.appendChild(script);
-    
+
     console.log('Live2D脚本已添加到文档中');
   });
 });
@@ -329,7 +330,7 @@ const performSearch = (): void => {
 
 .header {
   position: relative;
-  
+
   .nav {
     position: fixed;
     top: 0;
@@ -345,12 +346,12 @@ const performSearch = (): void => {
     z-index: 100;
     background-color: rgba(40, 40, 40, 0.35);
     backdrop-filter: blur(5px);
-    
+
     &.visible {
       opacity: 1;
       visibility: visible;
     }
-    
+
     .menu-wrapper {
       display: flex;
       align-items: center;
@@ -360,7 +361,7 @@ const performSearch = (): void => {
       margin: 0 auto;
       padding: 0 20px;
       position: relative;
-      
+
       .menu {
         position: absolute;
         left: 50%;
@@ -368,7 +369,7 @@ const performSearch = (): void => {
         display: flex;
         align-items: center;
         gap: 30px;
-        
+
         a, .dropdown > span {
           color: #fff;
           font-size: 15px;
@@ -377,7 +378,7 @@ const performSearch = (): void => {
           font-weight: 400;
           padding: 5px 0;
           text-align: center;
-          
+
           &:after {
             content: '';
             position: absolute;
@@ -389,15 +390,15 @@ const performSearch = (): void => {
             background-color: #fff;
             transition: width 0.3s ease;
           }
-          
+
           &:hover:after, &.router-link-active:after {
             width: 100%;
           }
         }
-        
+
         .dropdown {
           position: relative;
-          
+
           .dropdown-content {
             position: absolute;
             top: 100%;
@@ -412,39 +413,39 @@ const performSearch = (): void => {
             display: none;
             flex-direction: column;
             z-index: 10;
-            
+
             a {
               padding: 8px 15px;
               white-space: nowrap;
               text-align: center;
-              
+
               &:after {
                 display: none;
               }
-              
+
               &:hover {
                 background-color: rgba(255, 255, 255, 0.1);
               }
             }
           }
-          
+
           &:hover .dropdown-content {
             display: flex;
           }
         }
       }
-      
+
       .right-actions {
         margin-left: auto;
         display: flex;
         align-items: center;
         gap: 15px;
-        
+
         .search-container {
           position: relative;
           display: flex;
           align-items: center;
-          
+
           .search-input {
             width: 200px;
             height: 32px;
@@ -456,17 +457,17 @@ const performSearch = (): void => {
             background-color: rgba(255, 255, 255, 0.15);
             color: #fff;
             transition: all 0.3s ease;
-            
+
             &::placeholder {
               color: rgba(255, 255, 255, 0.7);
             }
-            
+
             &:focus {
               background-color: rgba(255, 255, 255, 0.2);
               width: 220px;
             }
           }
-          
+
           .search-btn {
             width: 32px;
             height: 32px;
@@ -477,18 +478,18 @@ const performSearch = (): void => {
             background-color: transparent;
             border-radius: 50%;
             transition: all 0.2s ease;
-            
+
             &:hover {
               background-color: rgba(255, 255, 255, 0.1);
             }
-            
+
             .search-icon {
               color: #fff;
               font-size: 16px;
             }
           }
         }
-        
+
         .avatar {
           width: 32px;
           height: 32px;
@@ -497,11 +498,11 @@ const performSearch = (): void => {
           cursor: pointer;
           border: 2px solid rgba(255, 255, 255, 0.2);
           transition: border-color 0.2s ease;
-          
+
           &:hover {
             border-color: rgba(255, 255, 255, 0.4);
           }
-          
+
           img {
             width: 100%;
             height: 100%;
@@ -511,27 +512,27 @@ const performSearch = (): void => {
       }
     }
   }
-  
+
   .category-info {
     padding: 80px 0 40px;
     background-color: #2a2a2a;
     border-bottom: 1px solid #3a3a3a;
     margin-bottom: 30px;
-    
+
     .container {
       max-width: 800px;
       margin: 0 auto;
       padding: 0 20px;
       text-align: center;
     }
-    
+
     h1 {
       font-size: 2.2rem;
       margin-bottom: 15px;
       font-weight: 700;
       color: #ffffff;
     }
-    
+
     .count {
       color: #888;
       font-size: 14px;
@@ -541,7 +542,7 @@ const performSearch = (): void => {
 
 .main {
   flex: 1;
-  
+
   .container {
     max-width: 900px;
     margin: 0 auto;
@@ -550,12 +551,12 @@ const performSearch = (): void => {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .loading, .error, .no-blogs {
     text-align: center;
     padding: 50px 0;
     color: #e0e0e0;
-    
+
     .home-link {
       display: inline-block;
       margin-top: 20px;
@@ -564,20 +565,20 @@ const performSearch = (): void => {
       color: white;
       border-radius: 5px;
       text-decoration: none;
-      
+
       &:hover {
         background-color: #276cda;
       }
     }
   }
-  
+
   .blog-list {
     display: flex;
     flex-direction: column;
     gap: 20px;
     margin-bottom: 50px;
   }
-  
+
   .blog-card {
     display: flex;
     flex-direction: row;
@@ -591,23 +592,23 @@ const performSearch = (): void => {
     width: 780px;
     height: 300px;
     margin-bottom: 20px;
-    
+
     &:hover {
       transform: translateY(-3px);
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
     }
-    
+
     &:nth-child(even) {
       flex-direction: row-reverse;
     }
-    
+
     .blog-thumbnail {
       position: relative;
       width: 429px;
       height: 300px;
       flex-shrink: 0;
       overflow: hidden;
-      
+
       img {
         width: 100%;
         height: 100%;
@@ -615,18 +616,18 @@ const performSearch = (): void => {
         transition: transform 0.3s ease;
       }
     }
-    
+
     &:hover .blog-thumbnail img {
       transform: scale(1.05);
     }
-    
+
     .blog-info {
       flex: 1;
       padding: 25px 30px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      
+
       .blog-title {
         font-size: 22px;
         margin-bottom: 15px;
@@ -638,7 +639,7 @@ const performSearch = (): void => {
         overflow: hidden;
         line-height: 1.4;
       }
-      
+
       .blog-desc {
         color: #b0b0b0;
         font-size: 16px;
@@ -650,14 +651,14 @@ const performSearch = (): void => {
         margin-bottom: 15px;
         flex: 1;
       }
-      
+
       .blog-meta {
         margin-top: auto;
         display: flex;
         justify-content: space-between;
         font-size: 14px;
         color: #888;
-        
+
         .blog-date {
           display: flex;
           align-items: center;
@@ -665,12 +666,12 @@ const performSearch = (): void => {
           padding: 4px 10px;
           border-radius: 4px;
         }
-        
+
         .blog-date:before {
           content: '📅';
           margin-right: 5px;
         }
-        
+
         .blog-views {
           display: flex;
           align-items: center;
@@ -678,12 +679,12 @@ const performSearch = (): void => {
           padding: 4px 10px;
           border-radius: 4px;
         }
-        
+
         .blog-views:before {
           content: '👁️';
           margin-right: 5px;
         }
-        
+
         .blog-category {
           display: flex;
           align-items: center;
@@ -692,7 +693,7 @@ const performSearch = (): void => {
           border-radius: 4px;
           color: #6e9fff;
         }
-        
+
         .blog-category:before {
           content: '📁';
           margin-right: 5px;
@@ -709,23 +710,23 @@ const performSearch = (): void => {
   font-size: 14px;
   margin-top: auto;
   background-color: #2a2a2a;
-  
+
   .copyright {
     margin-bottom: 5px;
   }
-  
+
   .powered-by {
     margin-bottom: 5px;
   }
-  
+
   .icp {
     font-size: 12px;
     color: #999;
   }
-  
+
   a {
     color: #6e9fff;
-    
+
     &:hover {
       color: #90b5ff;
     }
@@ -736,22 +737,22 @@ const performSearch = (): void => {
   .main .container {
     max-width: 800px;
   }
-  
+
   .blog-card {
     width: 700px;
-    
+
     .blog-thumbnail {
       width: 300px;
     }
-    
+
     .blog-info {
       padding: 20px 25px;
-      
+
       .blog-title {
         font-size: 20px;
         margin-bottom: 12px;
       }
-      
+
       .blog-desc {
         font-size: 15px;
       }
@@ -760,11 +761,11 @@ const performSearch = (): void => {
 }
 
 @media (max-width: 768px) {
-  .header {    
+  .header {
     .nav .menu-wrapper {
       width: 95%;
       padding: 0 15px;
-      
+
       .menu {
         position: static;
         transform: none;
@@ -772,56 +773,56 @@ const performSearch = (): void => {
         width: 100%;
         gap: 15px;
         margin: 0 auto;
-        
+
         a, .dropdown > span {
           font-size: 14px;
         }
       }
-      
+
       .right-actions {
         position: absolute;
         right: 15px;
         gap: 10px;
       }
-      
+
       .avatar {
         width: 28px;
         height: 28px;
       }
     }
-    
+
     .category-info {
       padding: 60px 0 30px;
-      
+
       h1 {
         font-size: 1.8rem;
       }
     }
   }
-  
+
   .main {
     .container {
       max-width: 95%;
     }
-    
+
     .blog-card, .blog-card:nth-child(even) {
       width: 100%;
       height: auto;
       flex-direction: column;
-      
+
       .blog-thumbnail {
         width: 100%;
         height: 200px;
       }
-      
+
       .blog-info {
         padding: 15px 20px;
-        
+
         .blog-title {
           font-size: 18px;
           margin-bottom: 10px;
         }
-        
+
         .blog-desc {
           font-size: 14px;
           -webkit-line-clamp: 2;
@@ -836,15 +837,15 @@ const performSearch = (): void => {
   .header .nav .menu-wrapper {
     .menu {
       gap: 10px;
-      
+
       a, .dropdown > span {
         font-size: 13px;
       }
     }
-    
+
     .search-container {
       display: none;
     }
   }
 }
-</style> 
+</style>
