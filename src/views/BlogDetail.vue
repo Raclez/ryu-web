@@ -222,14 +222,7 @@
     </button>
 
     <!-- 页脚 -->
-    <footer class="footer">
-      <div class="copyright">
-        © {{ new Date().getFullYear() }} Ryu
-      </div>
-      <div class="icp">
-        鄂ICP备2024072949号
-      </div>
-    </footer>
+    <AppFooter/>
   </div>
 </template>
 
@@ -239,10 +232,12 @@ import {useRoute, useRouter} from 'vue-router';
 import {useBlogStore} from '@/store';
 import AppHeader from '@/components/AppHeader.vue';
 import Live2DWidget from '@/components/Live2DWidget.vue';
+import AppFooter from '@/components/AppFooter.vue';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
-import {getRecommendBlog} from '@/api/post';
+import {getRecommendBlog, recordBlogView} from '@/api/post';
+import {getOrCreateVisitorId} from '@/utils/visitorUtils';
 
 const route = useRoute();
 const router = useRouter();
@@ -292,6 +287,74 @@ const renderedContent = ref<string>('');
 const blogContentRef = ref<HTMLElement | null>(null);
 const prevPost = ref<PostPreview | null>(null);
 const nextPost = ref<PostPreview | null>(null);
+
+// 添加浏览时间记录
+const viewStartTime = ref<number>(0);
+const viewingTime = ref<number>(0);
+const viewTimerId = ref<number | null>(null);
+const isPageVisible = ref<boolean>(true);
+const currentBlogId = ref<string>('');
+
+// 记录浏览开始时间并启动计时器
+const startViewTracking = (id: string) => {
+  if (currentBlogId.value === id && viewTimerId.value !== null) {
+    // 已经在记录这篇文章，不需要重新开始
+    return;
+  }
+
+  // 如果之前在记录其他文章，先结束那篇文章的记录
+  if (currentBlogId.value && currentBlogId.value !== id) {
+    endViewTracking();
+  }
+
+  currentBlogId.value = id;
+  viewStartTime.value = Date.now();
+  viewingTime.value = 0;
+  console.log('开始记录浏览时间:', id, new Date(viewStartTime.value).toISOString());
+
+  // 每秒更新一次浏览时间
+  viewTimerId.value = window.setInterval(() => {
+    if (isPageVisible.value) {
+      viewingTime.value += 1;
+    }
+  }, 1000);
+};
+
+// 结束浏览记录并发送数据
+const endViewTracking = async () => {
+  if (currentBlogId.value && viewStartTime.value > 0) {
+    // 清除计时器
+    if (viewTimerId.value !== null) {
+      clearInterval(viewTimerId.value);
+      viewTimerId.value = null;
+    }
+
+    const viewDuration = viewingTime.value; // 使用累计的浏览时间（秒）
+    console.log('结束记录浏览时间:', currentBlogId.value, '浏览时长:', viewDuration, '秒');
+
+    try {
+      await recordBlogView({
+        postId: currentBlogId.value,
+        viewDuration,
+        referrer: document.referrer,
+        visitorId: getOrCreateVisitorId()
+      });
+    } catch (error) {
+      console.error('记录浏览历史失败:', error);
+    }
+
+    // 重置记录
+    viewStartTime.value = 0;
+    viewingTime.value = 0;
+    currentBlogId.value = '';
+  }
+};
+
+// 处理页面可见性变化
+const handleVisibilityChange = () => {
+  isPageVisible.value = document.visibilityState === 'visible';
+  console.log('页面可见性变化:', isPageVisible.value ? '可见' : '隐藏');
+};
 
 const formattedDate = computed(() => {
   if (!blog.value || !blog.value.createTime) return '';
@@ -393,8 +456,14 @@ const fetchBlogDetail = async (id?: string): Promise<void> => {
   try {
     if (id) {
       blog.value = await blogStore.fetchBlogById(id);
+
+      // 开始记录浏览时间
+      startViewTracking(id);
     } else {
       blog.value = await blogStore.fetchBlogById('1');
+
+      // 开始记录浏览时间
+      startViewTracking('1');
     }
 
     console.log('blog', blog.value);
@@ -657,6 +726,9 @@ onMounted(() => {
   }
 
   window.addEventListener('scroll', handleScroll);
+  // 添加页面可见性变化事件监听
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
   // 初始加载时也检查一次位置
   nextTick(() => {
     updateCatalogPosition();
@@ -665,11 +737,24 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+  // 在组件卸载前结束浏览记录
+  endViewTracking();
+
+  // 确保清除计时器
+  if (viewTimerId.value !== null) {
+    clearInterval(viewTimerId.value);
+    viewTimerId.value = null;
+  }
 });
 
 // 监听路由变化
 watch(() => route.params.id, (newId) => {
   if (newId) {
+    // 结束上一篇文章的浏览记录
+    endViewTracking();
+    // 获取新文章
     fetchBlogDetail(typeof newId === 'string' ? newId : newId[0]);
   }
 });
@@ -746,10 +831,18 @@ const submitComment = (): void => {
 };
 
 // 添加跳转到相关文章的函数
-const goToPost = (post: PostPreview): void => {
-  if (!post || !post.id) return;
-  // 使用router.push导航到相应博客
-  router.push({ path: `/blog/${post.id}` });
+const goToPost = async (post: PostPreview): Promise<void> => {
+  try {
+    // 结束当前文章的浏览记录
+    await endViewTracking();
+
+    // 导航到博客详情页
+    router.push({name: 'BlogDetail', params: {id: post.id}});
+  } catch (error) {
+    console.error('跳转文章失败:', error);
+    // 即使失败，仍然导航到博客详情页
+    router.push({name: 'BlogDetail', params: {id: post.id}});
+  }
 };
 </script>
 
@@ -971,9 +1064,9 @@ const goToPost = (post: PostPreview): void => {
 // 内容布局
 .content-container {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1200px) 300px; // 增加中间内容区域宽度
+  grid-template-columns: 120px minmax(0, 800px) 300px; // 减少中间内容区域宽度，从1200px改为800px
   gap: 30px;
-  max-width: 1620px; // 增加整体最大宽度
+  max-width: 1220px; // 减少整体最大宽度，从1620px改为1220px
   margin: 0 auto;
   padding: 30px 20px;
 
@@ -1258,7 +1351,10 @@ const goToPost = (post: PostPreview): void => {
         margin-bottom: 28px;
         margin-top: 16px;
         padding-left: 26px;
-        counter-reset: list-item;
+      }
+
+      :deep(ul) {
+        list-style: none; // 移除默认列表样式
 
         li {
           margin-bottom: 12px;
@@ -1280,12 +1376,15 @@ const goToPost = (post: PostPreview): void => {
       }
 
       :deep(ol) {
+        list-style: none; // 移除默认列表样式
         counter-reset: item;
 
         li {
           counter-increment: item;
           position: relative;
           padding-left: 4px;
+          margin-bottom: 12px;
+          line-height: 1.7;
         }
 
         li::before {
@@ -2409,87 +2508,5 @@ const goToPost = (post: PostPreview): void => {
   100% { transform: scale(1); opacity: 1; }
 }
 
-// 页脚样式
-.footer {
-  padding: 30px 20px;
-  text-align: center;
-  color: #888;
-  font-size: 14px;
-  margin-top: 60px;
-  background-color: #1c1c1c;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.3), transparent);
-    animation: footerGlow 4s infinite;
-  }
-
-  .copyright {
-    margin-bottom: 10px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    color: #aaa;
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: #ffcc00;
-    }
-  }
-
-  .icp {
-    font-size: 12px;
-    color: #777;
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: #999;
-    }
-  }
-
-  a {
-    color: #ffcc00;
-    text-decoration: none;
-    position: relative;
-    transition: all 0.3s ease;
-
-    &:hover {
-      color: #ffd633;
-    }
-
-    &:after {
-      content: '';
-      position: absolute;
-      width: 100%;
-      transform: scaleX(0);
-      height: 1px;
-      bottom: -2px;
-      left: 0;
-      background-color: #ffcc00;
-      transform-origin: bottom right;
-      transition: transform 0.3s ease-out;
-    }
-
-    &:hover:after {
-      transform: scaleX(1);
-      transform-origin: bottom left;
-    }
-  }
-}
-
-@keyframes footerGlow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
+// 删除浏览历史链接相关样式
 </style>

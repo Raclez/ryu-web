@@ -1,6 +1,6 @@
-import { http } from '@/utils/http/index.ts'
-import { BaseBlog, BlogDetail, CursorPaginatedResponse, Category } from './types'
-import { ResponseBody } from '@/utils/http/types'
+import {http} from '@/utils/http/index.ts'
+import {BaseBlog, BlogDetail, Category, CursorPaginatedResponse} from './types'
+import {ResponseBody} from '@/utils/http/types'
 
 /**
  * 博客分页参数接口
@@ -58,4 +58,20 @@ export async function getCategories(): Promise<ResponseBody<Category[]>> {
  */
 export async function getBlogsByCategory(categoryName: string): Promise<ResponseBody<BaseBlog[]>> {
   return http.get(`/ryu-content/posts/category/${categoryName}`);
+}
+
+/**
+ * 记录博客浏览历史
+ * @param params 浏览记录参数
+ * @returns 响应结果
+ */
+export interface ViewRecordParams {
+  postId: string;
+  viewDuration?: number;
+  referrer?: string;
+  visitorId?: string;
+}
+
+export async function recordBlogView(params: ViewRecordParams): Promise<ResponseBody<any>> {
+  return http.post('/ryu-content/view/record', params);
 }

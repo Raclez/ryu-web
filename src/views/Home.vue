@@ -88,16 +88,16 @@
               <h3 class="blog-title">{{ blog.title }}</h3>
               <p class="blog-desc">{{ blog.excerpt }}</p>
               <div class="blog-meta">
-                <span class="blog-date">
+                <span v-if="blog.createTime" class="blog-date">
                   <i>📅</i>{{ formatDate(blog.createTime) }}
                 </span>
                 <span class="blog-comments">
                   <i>💬</i>{{ randomComments() }}
                 </span>
-                <span class="blog-views">
-                  <i>👁️</i>{{blog.views }}
+                <span v-if="blog.views !== undefined" class="blog-views">
+                  <i>👁️</i>{{ blog.views }}
                 </span>
-                <span class="blog-category">
+                <span v-if="blog.categoryName" class="blog-category">
                   <i>📁</i>{{ blog.categoryName }}
                 </span>
               </div>
@@ -124,17 +124,8 @@
       <div class="pull-text">拉我回顶部~</div>
     </div>
 
-    <footer class="footer">
-      <div class="copyright">
-        © {{ new Date().getFullYear() }} Ryu
-      </div>
-      <div class="powered-by">
-        Powered by <a href="https://halo.run/" target="_blank">Halo</a>  •  Crafted with by <a href="https://lixingyong.com/" target="_blank">LIlGG</a>
-      </div>
-      <div class="icp">
-        鄂ICP备2024072949号
-      </div>
-    </footer>
+    <!-- 页脚 -->
+    <AppFooter/>
   </div>
 </template>
 
@@ -142,6 +133,7 @@
 import {computed, nextTick, onBeforeUnmount, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useBlogStore} from '@/store';
+import AppFooter from '@/components/AppFooter.vue';
 
 const router = useRouter();
 const blogStore = useBlogStore();
@@ -186,6 +178,7 @@ const formatDate = (dateString: string): string => {
 
 // 导航到博客详情页
 const navigateToBlog = (blogId: string): void => {
+  // 不再直接调用incrementBlogViews，改为在详情页处理
   router.push({ name: 'BlogDetail', params: { id: blogId } });
 };
 
@@ -291,6 +284,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
 .home-container {
   min-height: 100vh;
   display: flex;
@@ -541,15 +536,16 @@ onBeforeUnmount(() => {
       text-align: center;
 
       .hero-title {
-        font-size: 3.5rem;
-        font-weight: bold;
+        font-size: 4rem;
+        font-weight: normal;
         color: #fff;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        letter-spacing: 1px;
+        letter-spacing: 2px;
         opacity: 0;
         transform: translateY(30px);
         animation: fadeInUp 1s forwards;
         animation-delay: 0.3s;
+        font-family: 'Dancing Script', cursive;
       }
     }
   }
@@ -652,8 +648,21 @@ onBeforeUnmount(() => {
         color: #ffcc00;
       }
 
+      .blog-desc {
+        transform: translateY(-2px);
+        color: #ffcc00;
+        background: transparent;
+        box-shadow: none;
+      }
+
       .blog-meta > span {
         transform: translateY(-3px);
+        border-color: rgba(80, 80, 80, 0.7);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+      }
+
+      .blog-meta:after {
+        background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.2), transparent);
       }
     }
 
@@ -721,18 +730,30 @@ onBeforeUnmount(() => {
 
       .blog-desc {
         color: #bbb;
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin-bottom: 40px; /* 给底部元数据腾出空间 */
-        padding: 10px 0;
-        text-align: left;
-        font-family: 'SimSun', 'Noto Sans SC', sans-serif;
+        font-size: 1rem;
+        line-height: 1.8;
+        margin-bottom: 50px;
+        text-align: center;
+        font-family: 'Dancing Script', cursive;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 3;
         overflow: hidden;
         text-overflow: ellipsis;
         width: 100%;
+        letter-spacing: 0.8px;
+        font-weight: 400;
+        padding: 14px 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        margin: 10px 0 35px 0;
+        background: transparent;
+        border-radius: 0;
+      }
+
+      .blog-desc::before,
+      .blog-desc::after {
+        display: none;
       }
 
       .blog-meta {
@@ -743,11 +764,40 @@ onBeforeUnmount(() => {
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        flex-wrap: nowrap;
         gap: 8px;
-        height: 30px;
+        height: auto;
+        min-height: 30px;
         overflow-x: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        padding-bottom: 5px;
+
+        .blog-date {
+          order: 1;
+        }
+
+        .blog-views {
+          order: 2;
+        }
+
+        .blog-comments {
+          order: 3;
+        }
+
+        .blog-category {
+          order: 4;
+        }
+
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
 
         &::-webkit-scrollbar {
           display: none;
@@ -758,17 +808,23 @@ onBeforeUnmount(() => {
         display: inline-flex;
         align-items: center;
         padding: 3px 8px;
-        background-color: rgba(40, 40, 40, 0.7);
+        background-color: rgba(30, 30, 30, 0.7);
         border-radius: 15px;
         font-size: 0.75rem;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
         white-space: nowrap;
         flex: 0 0 auto;
+        border: 1px solid rgba(60, 60, 60, 0.5);
+        max-width: none;
+        overflow: visible;
       }
 
       .blog-meta i {
-        margin-right: 5px;
+        margin-right: 6px;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
       }
 
       .blog-date {
@@ -929,9 +985,18 @@ onBeforeUnmount(() => {
             flex-direction: column;
             height: auto;
             max-width: 100%;
+            width: 100%;
 
             &:nth-child(even) {
-              flex-direction: column; // 确保所有卡片在移动端都是相同方向
+              flex-direction: column;
+            }
+
+            &:active, &:hover {
+              .blog-desc {
+                background: transparent;
+                color: #ffcc00;
+                transform: scale(1.02);
+              }
             }
 
             .blog-thumbnail {
@@ -939,24 +1004,31 @@ onBeforeUnmount(() => {
               height: 160px;
 
               &:before {
-                opacity: 0; // 移除图片上的白色覆盖层
-                background: none; // 完全移除渐变覆盖
+                opacity: 0;
+                background: none;
               }
             }
 
             .blog-info {
               padding: 15px;
+              height: auto;
 
               .blog-title {
                 font-size: 1.2rem;
                 margin-bottom: 10px;
+                width: 100%;
               }
 
               .blog-desc {
-                font-size: 0.9rem;
-                -webkit-line-clamp: 2; // 限制为2行
-                margin-bottom: 35px; // 为底部元数据留出空间
-                padding: 0;
+                font-size: 0.95rem;
+                -webkit-line-clamp: 2;
+                margin-bottom: 45px;
+                padding: 10px 5px;
+                text-align: center;
+                background: transparent;
+                transition: all 0.3s ease;
+                letter-spacing: 0.6px;
+                line-height: 1.7;
               }
 
               .blog-meta {
@@ -964,12 +1036,17 @@ onBeforeUnmount(() => {
                 left: 15px;
                 right: 15px;
                 flex-wrap: wrap;
-                justify-content: flex-start; // 从左到右排列
+                justify-content: flex-end;
                 gap: 6px;
+                height: auto;
+                min-height: 30px;
+                padding-bottom: 5px;
 
                 span {
                   font-size: 0.75rem;
-                  padding: 2px 6px;
+                  padding: 4px 8px;
+                  margin-bottom: 5px;
+                  white-space: nowrap;
                 }
               }
             }
@@ -1032,17 +1109,30 @@ onBeforeUnmount(() => {
         font-size: 17px;
       }
 
+      .blog-desc {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        padding: 6px 4px;
+        margin-bottom: 35px;
+        letter-spacing: 0.5px;
+      }
+
       .blog-meta {
         bottom: 10px;
         right: 15px;
         left: 15px;
-        height: 26px;
+        height: auto;
+        min-height: 26px;
         gap: 5px;
-      }
+        flex-wrap: wrap;
+        padding-bottom: 5px;
 
-      .blog-meta > span {
-        padding: 2px 6px;
-        font-size: 0.65rem;
+        span {
+          padding: 3px 6px;
+          font-size: 0.7rem;
+          margin-bottom: 4px;
+          white-space: nowrap;
+        }
       }
     }
   }
@@ -1733,8 +1823,21 @@ onBeforeUnmount(() => {
         color: #ffcc00;
       }
 
+      .blog-desc {
+        transform: translateY(-2px);
+        color: #ffcc00;
+        background: transparent;
+        box-shadow: none;
+      }
+
       .blog-meta > span {
         transform: translateY(-3px);
+        border-color: rgba(80, 80, 80, 0.7);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+      }
+
+      .blog-meta:after {
+        background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.2), transparent);
       }
     }
 
@@ -1802,18 +1905,30 @@ onBeforeUnmount(() => {
 
       .blog-desc {
         color: #bbb;
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin-bottom: 40px; /* 给底部元数据腾出空间 */
-        padding: 10px 0;
-        text-align: left;
-        font-family: 'SimSun', 'Noto Sans SC', sans-serif;
+        font-size: 1rem;
+        line-height: 1.8;
+        margin-bottom: 50px;
+        text-align: center;
+        font-family: 'Dancing Script', cursive;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 3;
         overflow: hidden;
         text-overflow: ellipsis;
         width: 100%;
+        letter-spacing: 0.8px;
+        font-weight: 400;
+        padding: 14px 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        margin: 10px 0 35px 0;
+        background: transparent;
+        border-radius: 0;
+      }
+
+      .blog-desc::before,
+      .blog-desc::after {
+        display: none;
       }
 
       .blog-meta {
@@ -1824,11 +1939,40 @@ onBeforeUnmount(() => {
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        flex-wrap: nowrap;
         gap: 8px;
-        height: 30px;
+        height: auto;
+        min-height: 30px;
         overflow-x: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        padding-bottom: 5px;
+
+        .blog-date {
+          order: 1;
+        }
+
+        .blog-views {
+          order: 2;
+        }
+
+        .blog-comments {
+          order: 3;
+        }
+
+        .blog-category {
+          order: 4;
+        }
+
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
 
         &::-webkit-scrollbar {
           display: none;
@@ -1839,17 +1983,23 @@ onBeforeUnmount(() => {
         display: inline-flex;
         align-items: center;
         padding: 3px 8px;
-        background-color: rgba(40, 40, 40, 0.7);
+        background-color: rgba(30, 30, 30, 0.7);
         border-radius: 15px;
         font-size: 0.75rem;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
         white-space: nowrap;
         flex: 0 0 auto;
+        border: 1px solid rgba(60, 60, 60, 0.5);
+        max-width: none;
+        overflow: visible;
       }
 
       .blog-meta i {
-        margin-right: 5px;
+        margin-right: 6px;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
       }
 
       .blog-date {

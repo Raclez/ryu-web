@@ -101,3 +101,18 @@ export interface CursorPaginatedResponse<T> {
   cursor: string;
   hasMore: boolean;
 }
+
+/**
+ * 浏览历史DTO类型定义
+ */
+export interface ViewHistoryDTO {
+  id: string;
+  postId: string;
+  postTitle: string;
+  viewTime: string;
+  viewDuration: number;
+  ipAddress: string;
+  agent: string;
+  location: string;
+  coverImageUrl?: string; // 文章封面图
+}
