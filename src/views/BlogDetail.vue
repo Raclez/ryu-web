@@ -3,8 +3,56 @@
     <!-- 页面顶部进度条 -->
     <div class="scroll-progress-bar" :style="{width: `${scrollProgress}%`}"></div>
 
-    <!-- 顶部导航栏 -->
-    <AppHeader :categories="categories" />
+    <!-- 顶部导航栏 - 移动端隐藏 -->
+    <AppHeader v-if="!isMobile" :categories="categories"/>
+
+    <!-- 移动端导航栏 -->
+    <header v-if="isMobile" class="header" @mouseleave="hideNav" @mousemove="showNav">
+      <div :class="{ 'visible': isNavVisible }" :style="{
+        'height': '60px'
+      }" class="nav">
+        <div class="menu-wrapper">
+          <div class="menu">
+            <router-link class="nav-link" to="/">
+              <i class="nav-icon">🏠</i>
+              <span>首页</span>
+            </router-link>
+            <div class="dropdown">
+              <span class="nav-link">
+                <i class="nav-icon">📂</i>
+                <span>分类</span>
+              </span>
+              <div class="dropdown-content">
+                <!-- 分类列表 -->
+              </div>
+            </div>
+            <router-link class="nav-link" to="/backend">
+              <i class="nav-icon">💻</i>
+              <span>后端学习</span>
+            </router-link>
+          </div>
+          <div class="right-actions">
+            <div class="search-container">
+              <input v-if="showSearchInput"
+                     ref="searchInput"
+                     v-model="searchQuery"
+                     class="search-input"
+                     placeholder="搜索..."
+                     type="text"
+                     @blur="hideSearchInput"
+                     @keyup.enter="performSearch"
+              />
+              <div class="search-btn" @click="toggleSearchInput">
+                <i class="search-icon">🔍</i>
+              </div>
+            </div>
+            <div class="avatar">
+              <img alt="头像" src="@/assets/images/avatar.png"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">
@@ -21,17 +69,20 @@
     <!-- 博客内容 -->
     <div v-else-if="blog">
       <!-- 大图标题区 -->
-      <div class="hero-section" :style="{ backgroundImage: `url('${blog.coverImageUrl || '@/assets/images/banner.jpg'}')` }">
+      <div class="hero-section">
+        <div class="hero-image">
+          <img :src="blog.coverImageUrl || require('@/assets/images/banner.jpg')" alt="cover"/>
+        </div>
         <div class="hero-overlay"></div>
-        <div class="hero-content">
-        <h1 class="blog-title">{{ blog.title }}</h1>
-          <div class="author-info">
-            <img :src="blog.authorAvatar" alt="author" class="author-avatar" />
-            <span class="author-name">{{ blog.author }}</span>
-            <span class="publish-date">{{ formattedDate }}</span>
-            <span class="blog-views"><i>👁️</i>{{ blog.views }}</span>
-          </div>
-          </div>
+        <!-- <div class="hero-content"> -->
+        <!-- <h1 class="blog-title">{{ blog.title }}</h1> -->
+        <!-- <div class="author-info">
+          <img :src="blog.authorAvatar" alt="author" class="author-avatar" />
+          <span class="author-name">{{ blog.author }}</span>
+          <span class="publish-date">{{ formattedDate }}</span>
+          <span class="blog-views"><i>👁️</i>{{ blog.views }}</span>
+        </div> -->
+        <!-- </div> -->
       </div>
 
       <!-- 通知栏 -->
@@ -277,6 +328,7 @@ const error = ref<string | null>(null);
 const blog = ref<any>(null);
 const categories = ref<any[]>([]);
 const scrollProgress = ref<number>(0);
+const scrollY = ref<number>(0);
 const readingTime = ref<number>(0);
 const wordCount = ref<number>(0);
 const notifications = ref<boolean[]>([true, true]);
@@ -287,6 +339,12 @@ const renderedContent = ref<string>('');
 const blogContentRef = ref<HTMLElement | null>(null);
 const prevPost = ref<PostPreview | null>(null);
 const nextPost = ref<PostPreview | null>(null);
+const isMobile = ref<boolean>(false);
+
+// 检测是否为移动设备
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
 
 // 添加浏览时间记录
 const viewStartTime = ref<number>(0);
@@ -645,6 +703,7 @@ const scrollToHeading = (id: string) => {
 };
 
 const handleScroll = () => {
+  scrollY.value = window.scrollY;
   const scrollTop = window.scrollY;
   const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   scrollProgress.value = (scrollTop / docHeight) * 100;
@@ -657,6 +716,14 @@ const handleScroll = () => {
 
   // 更新目录位置
   updateCatalogPosition();
+
+  // 当用户滚动页面时自动显示导航栏
+  if (!isMobile.value) {
+    isNavVisible.value = scrollY.value > 100;
+  } else {
+    // 在移动端始终显示导航栏
+    isNavVisible.value = true;
+  }
 };
 
 const updateActiveHeading = () => {
@@ -729,6 +796,10 @@ onMounted(() => {
   // 添加页面可见性变化事件监听
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
+  // 检测移动设备
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+
   // 初始加载时也检查一次位置
   nextTick(() => {
     updateCatalogPosition();
@@ -738,6 +809,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('resize', checkMobile);
 
   // 在组件卸载前结束浏览记录
   endViewTracking();
@@ -844,6 +916,56 @@ const goToPost = async (post: PostPreview): Promise<void> => {
     router.push({name: 'BlogDetail', params: {id: post.id}});
   }
 };
+
+const loadMoreTrigger = ref<HTMLElement | null>(null);
+const isNavVisible = ref<boolean>(true); // 默认显示
+const showSearchInput = ref<boolean>(false);
+const searchQuery = ref<string>('');
+const searchInput = ref<HTMLElement | null>(null);
+const navOpacity = computed(() => {
+  // 根据滚动位置计算导航栏透明度
+  if (scrollY.value < 50) return 0.35; // 顶部时半透明
+  if (scrollY.value > 200) return 0.75; // 滚动200px后更不透明
+  return 0.35 + (scrollY.value - 50) / 150 * 0.4; // 在50-200px之间线性变化
+});
+
+// 显示导航栏
+const showNav = (): void => {
+  isNavVisible.value = true;
+};
+
+// 隐藏导航栏
+const hideNav = (): void => {
+  if (!isMobile.value && scrollY.value < 100) { // 只有非移动端且在页面顶部才自动隐藏导航栏
+    isNavVisible.value = false;
+  }
+};
+
+// 显示搜索输入框
+const toggleSearchInput = (): void => {
+  showSearchInput.value = !showSearchInput.value;
+  if (showSearchInput.value && searchInput.value) {
+    // 下一个微任务中聚焦搜索框
+    setTimeout(() => {
+      searchInput.value?.focus();
+    }, 0);
+  }
+};
+
+// 隐藏搜索输入框
+const hideSearchInput = (): void => {
+  showSearchInput.value = false;
+};
+
+// 执行搜索
+const performSearch = (): void => {
+  // 实现搜索逻辑
+  console.log('搜索查询:', searchQuery.value);
+  hideSearchInput();
+};
+
+// 添加浏览时间记录
+// ... existing code ...
 </script>
 
 <style lang="scss" scoped>
@@ -853,6 +975,318 @@ const goToPost = async (post: PostPreview): Promise<void> => {
   min-height: 100vh;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   position: relative;
+  overflow-x: hidden; // 防止水平内容溢出
+  padding: 0; // 确保没有内边距
+  margin: 0; // 确保没有外边距
+
+  @media (max-width: 768px) {
+    padding-top: 0; // 确保移动端没有顶部间距
+  }
+}
+
+// 移动端导航栏样式
+.header {
+  position: absolute; // 改为绝对定位
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  background-color: transparent;
+
+  @media (max-width: 768px) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 60px;
+  }
+
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    height: 60px;
+    background-color: transparent;
+    backdrop-filter: none;
+    width: 100%;
+    border: none; // 确保没有边框
+
+    &.visible {
+      opacity: 1;
+      visibility: visible;
+      background-color: rgba(28, 28, 28, 0.95); // 增加不透明度
+      backdrop-filter: blur(10px);
+
+      @media (max-width: 768px) {
+        background-color: rgba(28, 28, 28, 0.95); // 移动端背景色更不透明
+      }
+
+      .menu .nav-link {
+        animation: fadeIn 0.3s forwards;
+        animation-delay: calc(0.05s * var(--i, 0));
+        opacity: 0;
+
+        .nav-icon {
+          animation: bounceIn 0.5s forwards;
+          animation-delay: calc(0.1s * var(--i, 0) + 0.2s);
+        }
+      }
+
+      .right-actions {
+        animation: slideInRight 0.4s forwards;
+      }
+    }
+
+    .menu-wrapper {
+      display: flex;
+      align-items: center;
+      max-width: 1120px;
+      width: 100%;
+      padding: 0 30px;
+      position: relative;
+      height: 100%;
+      box-sizing: border-box;
+
+      .menu {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        justify-content: center;
+        margin: 0 auto;
+
+        .nav-link {
+          color: #fff;
+          font-size: 16px;
+          position: relative;
+          cursor: pointer;
+          font-weight: 400;
+          padding: 5px 0;
+          text-align: center;
+          transition: all 0.3s ease;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 8px;
+
+          .nav-icon {
+            font-size: 18px;
+            color: #ffcc00;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+          }
+
+          &:hover {
+            color: #ffcc00;
+            transform: translateY(-2px);
+
+            .nav-icon {
+              opacity: 1;
+              transform: scale(1.1);
+            }
+          }
+
+          &:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: -10px;
+            left: 0;
+            background-color: transparent;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            transform: scaleX(0.8);
+            transform-origin: center;
+          }
+
+          &:hover:after {
+            background-color: rgba(255, 204, 0, 0.7);
+            transform: scaleX(1);
+          }
+
+          &.router-link-active:after {
+            background-color: #ffcc00;
+            transform: scaleX(1);
+          }
+        }
+
+        .dropdown {
+          position: relative;
+
+          & > span {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            margin-top: 10px;
+            background-color: rgba(40, 40, 40, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            padding: 8px 0;
+            width: 120px;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+
+            &:before {
+              content: '';
+              position: absolute;
+              top: -5px;
+              left: 50%;
+              transform: translateX(-50%) rotate(45deg);
+              width: 10px;
+              height: 10px;
+              background: rgba(40, 40, 40, 0.95);
+              border-top: 1px solid rgba(255, 255, 255, 0.08);
+              border-left: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            a {
+              padding: 10px 16px;
+              white-space: nowrap;
+              text-align: center;
+              transition: all 0.25s ease;
+              position: relative;
+              font-size: 14px;
+
+              &:after {
+                display: none;
+              }
+
+              &:hover {
+                background-color: rgba(255, 204, 0, 0.15);
+                color: #ffcc00;
+                transform: translateX(3px);
+              }
+
+              &:before {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 20%;
+                right: 20%;
+                height: 1px;
+                background: rgba(255, 255, 255, 0.05);
+              }
+
+              &:last-child:before {
+                display: none;
+              }
+            }
+          }
+
+          &:hover .dropdown-content {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(5px);
+          }
+        }
+      }
+    }
+  }
+}
+
+.right-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: fixed;
+  right: 30px;
+  top: 17px;
+  opacity: 0;
+  animation: slideInRight 0.4s ease-out;
+
+  .search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .search-input {
+      width: 180px;
+      height: 32px;
+      border: none;
+      border-radius: 16px;
+      padding: 0 15px;
+      font-size: 14px;
+      outline: none;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.3s forwards;
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      &:focus {
+        background-color: rgba(255, 255, 255, 0.15);
+        width: 200px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    .search-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background-color: transparent;
+      border-radius: 50%;
+      color: #fff;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: scale(1.05);
+      }
+
+      .search-icon {
+        font-size: 20px;
+      }
+    }
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    overflow: hidden;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+  }
 }
 
 // 滚动进度条
@@ -862,7 +1296,7 @@ const goToPost = async (post: PostPreview): Promise<void> => {
   left: 0;
   height: 3px;
   background: linear-gradient(90deg, #ffcc00, #ff5722);
-  z-index: 1000;
+  z-index: 1001; // 确保在导航栏之上
   transition: width 0.1s;
 }
 
@@ -923,8 +1357,28 @@ const goToPost = async (post: PostPreview): Promise<void> => {
 .hero-section {
   position: relative;
   height: 350px;
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
+  background-color: #1c1c1c;
+  margin-top: 0;
+
+  @media (max-width: 768px) {
+    height: 280px; // 移动端减小高度
+  }
+
+  .hero-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+  }
 
   .hero-overlay {
     position: absolute;

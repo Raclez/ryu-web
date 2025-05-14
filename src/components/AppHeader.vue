@@ -7,12 +7,12 @@
     }">
       <div class="menu-wrapper">
         <div class="menu">
-          <router-link to="/" class="nav-link">
+          <router-link :style="{'--i': 0}" class="nav-link" to="/">
             <i class="nav-icon">🏠</i>
             <span>首页</span>
           </router-link>
           <div class="dropdown">
-            <span class="nav-link">
+            <span :style="{'--i': 1}" class="nav-link">
               <i class="nav-icon">📂</i>
               <span>分类</span>
             </span>
@@ -26,7 +26,7 @@
               </router-link>
             </div>
           </div>
-          <router-link to="/backend" class="nav-link">
+          <router-link :style="{'--i': 2}" class="nav-link" to="/backend">
             <i class="nav-icon">💻</i>
             <span>后端学习</span>
           </router-link>
@@ -53,17 +53,46 @@
         </div>
       </div>
     </div>
+    <div v-if="showBanner" :style="bannerStyle" class="banner">
+      <div class="hero-content">
+        <h1 v-if="bannerTitle" class="hero-title">{{ bannerTitle }}</h1>
+        <slot name="banner-content"></slot>
+      </div>
+    </div>
   </header>
 </template>
 
 <script setup lang="ts">
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
 
-defineProps({
+const props = defineProps({
   categories: {
     type: Array as () => { id: string, name: string }[],
     default: () => []
+  },
+  showBanner: {
+    type: Boolean,
+    default: false
+  },
+  bannerTitle: {
+    type: String,
+    default: ''
+  },
+  bannerImage: {
+    type: String,
+    default: '@/assets/images/banner.jpg'
+  },
+  bannerHeight: {
+    type: String,
+    default: '100vh'
   }
+});
+
+const bannerStyle = computed(() => {
+  return {
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(${props.bannerImage})`,
+    height: props.bannerHeight
+  };
 });
 
 const isNavVisible = ref<boolean>(false);
@@ -115,6 +144,12 @@ const handleScroll = (): void => {
 // 显示搜索输入框
 const toggleSearchInput = (): void => {
   showSearchInput.value = !showSearchInput.value;
+  if (showSearchInput.value && searchInput.value) {
+    // 下一个微任务中聚焦搜索框
+    setTimeout(() => {
+      searchInput.value?.focus();
+    }, 0);
+  }
 };
 
 // 隐藏搜索输入框
@@ -126,6 +161,7 @@ const hideSearchInput = (): void => {
 const performSearch = (): void => {
   // 实现搜索逻辑
   console.log('搜索查询:', searchQuery.value);
+  hideSearchInput();
 };
 
 onMounted(() => {
@@ -148,19 +184,20 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
 .progress-bar {
   position: fixed;
   top: 0;
   left: 0;
-  height: 5px;
-  background: linear-gradient(to right, #ff9500, #ffcc00);
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255, 204, 0, 1) 0%, rgba(254, 95, 85, 1) 100%);
   z-index: 1000;
   transition: width 0.1s;
 }
 
 .header {
   position: relative;
-  height: 60px;
   z-index: 100;
 
   .nav {
@@ -181,6 +218,21 @@ onBeforeUnmount(() => {
     &.visible {
       opacity: 1;
       visibility: visible;
+
+      .menu .nav-link {
+        animation: fadeIn 0.3s forwards;
+        animation-delay: calc(0.05s * var(--i, 0));
+        opacity: 0;
+
+        .nav-icon {
+          animation: bounceIn 0.5s forwards;
+          animation-delay: calc(0.1s * var(--i, 0) + 0.2s);
+        }
+      }
+
+      .right-actions {
+        animation: slideInRight 0.4s forwards;
+      }
     }
 
     .menu-wrapper {
@@ -252,6 +304,15 @@ onBeforeUnmount(() => {
           &.router-link-active:after {
             background-color: #ffcc00;
             transform: scaleX(1);
+          }
+        }
+
+        .router-link-active {
+          color: #ffcc00;
+          font-weight: 500;
+
+          .nav-icon {
+            opacity: 1;
           }
         }
 
@@ -358,6 +419,34 @@ onBeforeUnmount(() => {
       }
     }
   }
+
+  .banner {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .hero-content {
+      text-align: center;
+      padding: 0 20px;
+
+      .hero-title {
+        font-size: 4rem;
+        font-weight: normal;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        letter-spacing: 2px;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 1s forwards;
+        animation-delay: 0.3s;
+        font-family: 'Dancing Script', cursive;
+      }
+    }
+  }
 }
 
 .right-actions {
@@ -367,6 +456,8 @@ onBeforeUnmount(() => {
   position: fixed;
   right: 30px;
   top: 17px;
+  opacity: 0;
+  animation: slideInRight 0.4s ease-out;
 
   .search-container {
     position: relative;
@@ -385,6 +476,7 @@ onBeforeUnmount(() => {
       color: #fff;
       transition: all 0.3s ease;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.3s forwards;
 
       &::placeholder {
         color: rgba(255, 255, 255, 0.7);
@@ -444,6 +536,55 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     background-color: transparent !important;
@@ -456,6 +597,17 @@ onBeforeUnmount(() => {
       backdrop-filter: none !important;
       box-shadow: none !important;
       border: none !important;
+    }
+
+    .banner {
+      height: 200px !important;
+
+      .hero-content {
+        .hero-title {
+          font-size: 2.2rem;
+          margin-top: 50px;
+        }
+      }
     }
 
     .right-actions {
@@ -496,6 +648,10 @@ onBeforeUnmount(() => {
       right: 10px;
       top: 15px;
     }
+  }
+
+  .banner .hero-title {
+    font-size: 1.8rem !important;
   }
 }
 </style>

@@ -7,7 +7,8 @@
       <div class="nav" :class="{ 'visible': isNavVisible }" :style="{
         'background-color': `rgba(28, 28, 28, ${navOpacity})`,
         'backdrop-filter': `blur(${navOpacity * 10}px)`,
-        'height': '60px'
+        'height': '60px',
+        'width': '100%'
       }">
         <div class="menu-wrapper">
           <div class="menu">
@@ -293,6 +294,14 @@ onBeforeUnmount(() => {
   background-color: #1c1c1c;
   color: #e0e0e0;
   position: relative;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 }
 
 .header {
@@ -300,9 +309,16 @@ onBeforeUnmount(() => {
   background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('@/assets/images/banner.jpg');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    height: 100vh;
+  }
 
   .nav {
     position: fixed;
@@ -320,10 +336,16 @@ onBeforeUnmount(() => {
     background-color: rgba(28, 28, 28, 0.6);
     backdrop-filter: blur(10px);
     height: 60px;
+    width: 100%;
+    border: none;
 
     &.visible {
       opacity: 1;
       visibility: visible;
+
+      @media (max-width: 768px) {
+        background-color: rgba(28, 28, 28, 0.95);
+      }
 
       .menu .nav-link {
         animation: fadeIn 0.3s forwards;
@@ -531,9 +553,21 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    background-color: transparent;
+
+    @media (max-width: 768px) {
+      position: relative;
+      height: 100%;
+    }
 
     .hero-content {
       text-align: center;
+      width: 100%;
+
+      @media (max-width: 768px) {
+        padding: 0 20px;
+      }
 
       .hero-title {
         font-size: 4rem;
@@ -546,6 +580,10 @@ onBeforeUnmount(() => {
         animation: fadeInUp 1s forwards;
         animation-delay: 0.3s;
         font-family: 'Dancing Script', cursive;
+
+        @media (max-width: 768px) {
+          font-size: 3rem;
+        }
       }
     }
   }
@@ -557,6 +595,11 @@ onBeforeUnmount(() => {
   max-width: 1120px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 30px 0;
+  }
 
   .container {
     max-width: 900px;
@@ -565,6 +608,12 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+      padding: 0 15px;
+    }
   }
 
   .section-title {
@@ -632,13 +681,20 @@ onBeforeUnmount(() => {
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     cursor: pointer;
     position: relative;
-    width: 780px;
+    width: 100%;
+    max-width: 780px;
     height: 300px;
     margin-bottom: 15px;
     opacity: 0;
     transform: translateY(40px);
     animation: fadeInUp 0.8s forwards;
     animation-delay: calc(0.1s * var(--i, 0));
+
+    @media (max-width: 768px) {
+      flex-direction: column !important;
+      height: auto;
+      width: 100%;
+    }
 
     &:hover {
       transform: translateY(-5px);
@@ -664,6 +720,10 @@ onBeforeUnmount(() => {
       .blog-meta:after {
         background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.2), transparent);
       }
+
+      @media (max-width: 768px) {
+        transform: translateY(-3px);
+      }
     }
 
     &:nth-child(even) {
@@ -676,6 +736,11 @@ onBeforeUnmount(() => {
       height: 300px;
       flex-shrink: 0;
       overflow: hidden;
+
+      @media (max-width: 768px) {
+        width: 100%;
+        height: 200px;
+      }
 
       &:before {
         content: '';
@@ -698,25 +763,17 @@ onBeforeUnmount(() => {
       }
     }
 
-    &:hover .blog-thumbnail {
-      &:before {
-        opacity: 0.3;
-      }
-
-      img {
-        transform: scale(1.05);
-      }
-    }
-
     .blog-info {
-      padding: 20px;
+      padding: 25px;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-      width: 100%;
-      height: 100%;
+      justify-content: space-between;
       position: relative;
+
+      @media (max-width: 768px) {
+        padding: 15px;
+      }
 
       .blog-title {
         font-size: 1.5rem;
@@ -726,6 +783,10 @@ onBeforeUnmount(() => {
         font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
         line-height: 1.3;
         font-weight: bold;
+
+        @media (max-width: 768px) {
+          font-size: 1.3rem;
+        }
       }
 
       .blog-desc {
@@ -749,11 +810,12 @@ onBeforeUnmount(() => {
         margin: 10px 0 35px 0;
         background: transparent;
         border-radius: 0;
-      }
 
-      .blog-desc::before,
-      .blog-desc::after {
-        display: none;
+        @media (max-width: 768px) {
+          margin-bottom: 30px;
+          padding: 10px 5px;
+          -webkit-line-clamp: 2;
+        }
       }
 
       .blog-meta {
@@ -773,20 +835,10 @@ onBeforeUnmount(() => {
         -ms-overflow-style: none;
         padding-bottom: 5px;
 
-        .blog-date {
-          order: 1;
-        }
-
-        .blog-views {
-          order: 2;
-        }
-
-        .blog-comments {
-          order: 3;
-        }
-
-        .blog-category {
-          order: 4;
+        @media (max-width: 768px) {
+          bottom: 10px;
+          left: 15px;
+          right: 15px;
         }
 
         &:after {
@@ -818,6 +870,11 @@ onBeforeUnmount(() => {
         border: 1px solid rgba(60, 60, 60, 0.5);
         max-width: none;
         overflow: visible;
+
+        @media (max-width: 768px) {
+          padding: 2px 6px;
+          font-size: 0.7rem;
+        }
       }
 
       .blog-meta i {
@@ -825,22 +882,11 @@ onBeforeUnmount(() => {
         font-size: 0.9rem;
         display: inline-flex;
         align-items: center;
-      }
 
-      .blog-date {
-        color: #ffcc80;
-      }
-
-      .blog-views {
-        color: #80cbc4;
-      }
-
-      .blog-comments {
-        color: #ce93d8;
-      }
-
-      .blog-category {
-        color: #90caf9;
+        @media (max-width: 768px) {
+          font-size: 0.8rem;
+          margin-right: 4px;
+        }
       }
     }
   }
@@ -960,6 +1006,13 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   .home-container {
     .header {
       background-color: transparent !important;
@@ -1807,13 +1860,20 @@ onBeforeUnmount(() => {
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     cursor: pointer;
     position: relative;
-    width: 780px;
+    width: 100%;
+    max-width: 780px;
     height: 300px;
     margin-bottom: 15px;
     opacity: 0;
     transform: translateY(40px);
     animation: fadeInUp 0.8s forwards;
     animation-delay: calc(0.1s * var(--i, 0));
+
+    @media (max-width: 768px) {
+      flex-direction: column !important;
+      height: auto;
+      width: 100%;
+    }
 
     &:hover {
       transform: translateY(-5px);
@@ -1839,6 +1899,10 @@ onBeforeUnmount(() => {
       .blog-meta:after {
         background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.2), transparent);
       }
+
+      @media (max-width: 768px) {
+        transform: translateY(-3px);
+      }
     }
 
     &:nth-child(even) {
@@ -1851,6 +1915,11 @@ onBeforeUnmount(() => {
       height: 300px;
       flex-shrink: 0;
       overflow: hidden;
+
+      @media (max-width: 768px) {
+        width: 100%;
+        height: 200px;
+      }
 
       &:before {
         content: '';
@@ -1873,25 +1942,17 @@ onBeforeUnmount(() => {
       }
     }
 
-    &:hover .blog-thumbnail {
-      &:before {
-        opacity: 0.3;
-      }
-
-      img {
-        transform: scale(1.05);
-      }
-    }
-
     .blog-info {
-      padding: 20px;
+      padding: 25px;
+      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-      width: 100%;
-      height: 100%;
+      justify-content: space-between;
       position: relative;
+
+      @media (max-width: 768px) {
+        padding: 15px;
+      }
 
       .blog-title {
         font-size: 1.5rem;
@@ -1901,6 +1962,10 @@ onBeforeUnmount(() => {
         font-family: 'SimHei', 'Microsoft YaHei', sans-serif;
         line-height: 1.3;
         font-weight: bold;
+
+        @media (max-width: 768px) {
+          font-size: 1.3rem;
+        }
       }
 
       .blog-desc {
@@ -1924,11 +1989,12 @@ onBeforeUnmount(() => {
         margin: 10px 0 35px 0;
         background: transparent;
         border-radius: 0;
-      }
 
-      .blog-desc::before,
-      .blog-desc::after {
-        display: none;
+        @media (max-width: 768px) {
+          margin-bottom: 30px;
+          padding: 10px 5px;
+          -webkit-line-clamp: 2;
+        }
       }
 
       .blog-meta {
@@ -1948,20 +2014,10 @@ onBeforeUnmount(() => {
         -ms-overflow-style: none;
         padding-bottom: 5px;
 
-        .blog-date {
-          order: 1;
-        }
-
-        .blog-views {
-          order: 2;
-        }
-
-        .blog-comments {
-          order: 3;
-        }
-
-        .blog-category {
-          order: 4;
+        @media (max-width: 768px) {
+          bottom: 10px;
+          left: 15px;
+          right: 15px;
         }
 
         &:after {
@@ -1993,6 +2049,11 @@ onBeforeUnmount(() => {
         border: 1px solid rgba(60, 60, 60, 0.5);
         max-width: none;
         overflow: visible;
+
+        @media (max-width: 768px) {
+          padding: 2px 6px;
+          font-size: 0.7rem;
+        }
       }
 
       .blog-meta i {
@@ -2000,22 +2061,11 @@ onBeforeUnmount(() => {
         font-size: 0.9rem;
         display: inline-flex;
         align-items: center;
-      }
 
-      .blog-date {
-        color: #ffcc80;
-      }
-
-      .blog-views {
-        color: #80cbc4;
-      }
-
-      .blog-comments {
-        color: #ce93d8;
-      }
-
-      .blog-category {
-        color: #90caf9;
+        @media (max-width: 768px) {
+          font-size: 0.8rem;
+          margin-right: 4px;
+        }
       }
     }
   }
@@ -2172,8 +2222,8 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, rgba(255, 204, 0, 1) 0%, rgba(254, 95, 85, 1) 100%);
-  z-index: 9999;
+  background: linear-gradient(90deg, #ffcc00, #ff5722);
+  z-index: 1001;
   transition: width 0.1s;
 }
 </style>

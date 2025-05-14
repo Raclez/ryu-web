@@ -2361,8 +2361,14 @@ const getWeatherByCity = async (): Promise<void> => {
 
 @media (max-width: 768px) {
   .live2d-container {
+    display: block !important; // 确保移动端显示
     left: 10px;
     bottom: 10px;
+    z-index: 10000; // 提高层级确保可见
+
+    #live2d-widget {
+      display: block !important; // 确保移动端显示
+    }
 
     .live2d-menu {
       width: 160px;
